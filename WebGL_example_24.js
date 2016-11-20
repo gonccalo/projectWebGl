@@ -29,13 +29,14 @@ var triangleVertexColorBuffer = null;
 var globalAngleYY = 0.0;
 
 var globalTz = 0.0;
+var andar = 0.0;
+var oldTx = 0.0;
 var globalTx = 0.0;
-
-var tokens;
+var labirin = [];
 // The local transformation parameters
 
 // The translation vector
-
+var count = 0;
 var tx = 0.0;
 
 var ty = 0.0;
@@ -43,13 +44,6 @@ var ty = 0.0;
 var tz = 0.0;
 
 // The rotation angles in degrees
-
-var angleXX = 0.0;
-
-var angleYY = 0.0;
-
-var angleZZ = 0.0;
-
 // The scaling factors
 
 var sx = 0.5;
@@ -58,43 +52,13 @@ var sy = 0.5;
 
 var sz = 0.5;
 
-// GLOBAL Animation controls
-
-var globalRotationYY_ON = 0;
-
-var globalRotationYY_DIR = 1;
-
-var globalRotationYY_SPEED = 1;
-
-// Local Animation controls
-
-var rotationXX_ON = 0;
-
-var rotationXX_DIR = 1;
-
-var rotationXX_SPEED = 1;
- 
-var rotationYY_ON = 0;
-
-var rotationYY_DIR = 1;
-
-var rotationYY_SPEED = 1;
- 
-var rotationZZ_ON = 0;
-
-var rotationZZ_DIR = 1;
-
-var rotationZZ_SPEED = 1;
- 
- var frente = 0;
- var lado = 0;
 // To allow choosing the way of drawing the model triangles
 
 var primitiveType = null;
  
 // To allow choosing the projection type
 
-var projectionType = 0;
+var projectionType = 1;
 
 // NEW --- Model Material Features
 
@@ -568,25 +532,12 @@ function computeIllumination( mvMatrix ) {
 	}
 }
 
-function drawModel( angleXX, angleYY, angleZZ, 
-					sx, sy, sz,
+function drawModel( sx, sy, sz,
 					tx, ty, tz,
 					mvMatrix,
-					primitiveType ) {
+					primitiveType ) {					 
 
-	// The the global model transformation is an input
-	
-	// Concatenate with the particular model transformations
-	
-    // Pay attention to transformation order !!
-    
-	mvMatrix = mult( mvMatrix, translationMatrix( tx, ty, tz ) );
-						 
-	mvMatrix = mult( mvMatrix, rotationZZMatrix( angleZZ ) );
-	
-	mvMatrix = mult( mvMatrix, rotationYYMatrix( angleYY ) );
-	
-	mvMatrix = mult( mvMatrix, rotationXXMatrix( angleXX ) );
+	mvMatrix = mult( mvMatrix, translationMatrix( tx, ty, tz ));
 	
 	mvMatrix = mult( mvMatrix, scalingMatrix( sx, sy, sz ) );
 						 
@@ -595,10 +546,17 @@ function drawModel( angleXX, angleYY, angleZZ,
 	var mvUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
 	
 	gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
-	
+	delete mvUniform;
+	delete mvMatrix;
 	// NEW - Aux. Function for computing the illumination
+	//if (count > 5){
+		//computeIllumination( mvMatrix );
+	//	count = 0;
+	//}
+	//else{
+	//	count += 1;
+	//}
 	
-	computeIllumination( mvMatrix );
 	
 	// Associating the data to the vertex shader
 	
@@ -609,15 +567,10 @@ function drawModel( angleXX, angleYY, angleZZ,
 	// Drawing 
 	
 	// primitiveType allows drawing as filled triangles / wireframe / vertices
+	gl.drawArrays(primitiveType, 0, triangleVertexPositionBuffer.numItems);
 	
+	/*
 	if( primitiveType == gl.LINE_LOOP ) {
-		
-		// To simulate wireframe drawing!
-		
-		// No faces are defined! There are no hidden lines!
-		
-		// Taking the vertices 3 by 3 and drawing a LINE_LOOP
-		
 		var i;
 		
 		for( i = 0; i < triangleVertexPositionBuffer.numItems / 3; i++ ) {
@@ -629,7 +582,8 @@ function drawModel( angleXX, angleYY, angleZZ,
 				
 		gl.drawArrays(primitiveType, 0, triangleVertexPositionBuffer.numItems); 
 		
-	}	
+	}
+	*/	
 }
 
 //----------------------------------------------------------------------------
@@ -647,39 +601,7 @@ function drawScene() {
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	
 	// Computing the Projection Matrix
-	
-	if( projectionType == 0 ) {
-		
-		// For now, the default orthogonal view volume
-		
-		pMatrix = ortho( -1.0, 1.0, -1.0, 1.0, -1.0, 1.0 );
-		
-		// Global transformation !!
-		
-		globalTz = 0.0;
-		
-		// TO BE DONE !
-		
-		// Allow the user to control the size of the view volume
-	}
-	else {	
-
-		// A standard view volume.
-		
-		// Viewer is at (0,0,0)
-		
-		// Ensure that the model is "inside" the view volume
-		
-		pMatrix = perspective( 45, 1, 0.05, 15 );
-		
-		// Global transformation !!
-		
-		//globalTz = -2.5;
-
-		// TO BE DONE !
-		
-		// Allow the user to control the size of the view volume
-	}
+	pMatrix = perspective( 90, 1, 0.05, 15 );
 	
 	// Passing the Projection Matrix to apply the current projection
 	
@@ -688,24 +610,38 @@ function drawScene() {
 	gl.uniformMatrix4fv(pUniform, false, new Float32Array(flatten(pMatrix)));
 	
 	// GLOBAL TRANSFORMATION FOR THE WHOLE SCENE
+	delete pMatrix;
+	delete pUniform;
+
 	mvMatrix = rotationYYMatrix(globalTx);
-	mvMatrix = mult(translationMatrix( 0, 0, globalTz ), mvMatrix);
+	oldTx = oldTx + ((-Math.sin(radians(globalTx))) * andar);
+	globalTz = globalTz + (Math.cos(radians(globalTx)) * andar);
+	andar = 0.0;
+	mvMatrix = mult(mvMatrix, translationMatrix( oldTx, 0, globalTz));
+
+
+	for(var i = 0; i< labirin.length; i++){
+		drawModel( sx, sy, sz,
+	               labirin[i][0], 0, labirin[i][2],
+	               mvMatrix,
+	               primitiveType );
+	}
+	delete mvMatrix;
 	//mvMatrix = mult(rotationYYMatrix(globalTx), mvMatrix);
-	
+	/*
 	// Instantianting the current model
 	for (var i = 0; i < tokens.length; i++) {
 		for (var j = 0; j < tokens[i].length; j++){
 			if(tokens[i][j] == '+'){
 				drawModel( angleXX, angleYY, angleZZ, 
 	           sx, sy, sz,
-	           tx + (-0.375+(j*0.25)), ty, tz +(0.375 + (i*-0.25)),
+	           tx + (-0.375+(j*0.25)), ty, tz +(0.375 + (i*-0.25) ),
 	           mvMatrix,
 	           primitiveType );
 			}
-			else{
-			}
 		}
-	}	
+	}
+	*/	
 }
 
 //----------------------------------------------------------------------------
@@ -724,30 +660,6 @@ function animate() {
 	if( lastTime != 0 ) {
 		
 		var elapsed = timeNow - lastTime;
-		
-		// Global rotation
-		
-		if( globalRotationYY_ON ) {
-
-			globalAngleYY += globalRotationYY_DIR * globalRotationYY_SPEED * (90 * elapsed) / 1000.0;
-	    }
-
-		// Local rotations
-		
-		if( rotationXX_ON ) {
-
-			angleXX += rotationXX_DIR * rotationXX_SPEED * (90 * elapsed) / 1000.0;
-	    }
-
-		if( rotationYY_ON ) {
-
-			angleYY += rotationYY_DIR * rotationYY_SPEED * (90 * elapsed) / 1000.0;
-	    }
-
-		if( rotationZZ_ON ) {
-
-			angleZZ += rotationZZ_DIR * rotationZZ_SPEED * (90 * elapsed) / 1000.0;
-	    }
 
 		// Rotating the light sources
 		for(var li = 0; li < lightSources.length; li++){
@@ -791,9 +703,6 @@ function tick() {
 	animate();
 }
 
-
-
-
 //----------------------------------------------------------------------------
 //
 //  User Interaction
@@ -806,13 +715,6 @@ function outputInfos(){
 //----------------------------------------------------------------------------
 
 function setEventListeners(){
-	
-	// File loading
-	
-	// Adapted from:
-	
-	// http://stackoverflow.com/questions/23331546/how-to-use-javascript-to-read-local-text-file-and-read-line-by-line
-	
 	document.getElementById("file").onchange = function(){
 		
 		var file = this.files[0];
@@ -820,37 +722,24 @@ function setEventListeners(){
 		var reader = new FileReader();
 		
 		reader.onload = function( progressEvent ){
-			tokens = this.result.split("\n");		
+			var tokens = this.result.split("\n");
+			for (var i = 0; i < tokens.length; i++) {
+				for (var j = 0; j < tokens[i].length; j++){
+					if(tokens[i][j] == '+'){
+						var ob = [(-0.375+(j*0.25)), 0, (0.375 + (i*-0.25))];
+						labirin.push(ob);
+					}
+				}
+			}			
 			console.log(tokens);
+			delete tokens;
 		};
 			
 		reader.readAsText( file );		
 	}
 
-    // Dropdown list
-	
-	var projection = document.getElementById("projection-selection");
-	
-	projection.addEventListener("click", function(){
-				
-		// Getting the selection
-		
-		var p = projection.selectedIndex;
-				
-		switch(p){
-			
-			case 0 : projectionType = 0;
-				break;
-			
-			case 1 : projectionType = 1;
-				break;
-		}  	
-	});      
-
 	// Dropdown list
-	
 	var list = document.getElementById("rendering-mode-selection");
-	
 	list.addEventListener("click", function(){
 				
 		// Getting the selection
@@ -876,68 +765,19 @@ function setEventListeners(){
 	document.onkeydown = function(e) {
     switch (e.keyCode) {
         case 37:
-            globalTx -= 0.5;
-            lado = 1;
-            frente = 0;
+            globalTx -= 1.5;
             break;
         case 38:
-            globalTz += 0.01;
-            frente = 1;
-            lado = 0;
+            andar = 0.01;
             break;
         case 39:
-            globalTx += 0.5;
-            lado = 1;
-            frente = 0;
+            globalTx += 1.5;
             break;
         case 40:
-            globalTz -= 0.01;
-            frente = 1;
-            lado = 0;
+            andar = -0.01;
             break;
-    }
-}; 
-      
-	document.getElementById("reset-button").onclick = function(){
-		
-		// The initial values
-
-		tx = 0.0;
-
-		ty = 0.0;
-
-		tz = 0.0;
-
-		angleXX = 0.0;
-
-		angleYY = 0.0;
-
-		angleZZ = 0.0;
-
-		sx = 0.5;
-
-		sy = 0.5;
-
-		sz = 0.5;
-		
-		rotationXX_ON = 0;
-		
-		rotationXX_DIR = 1;
-		
-		rotationXX_SPEED = 1;
-
-		rotationYY_ON = 0;
-		
-		rotationYY_DIR = 1;
-		
-		rotationYY_SPEED = 1;
-
-		rotationZZ_ON = 0;
-		
-		rotationZZ_DIR = 1;
-		
-		rotationZZ_SPEED = 1;
-	};            
+    	}
+	};          
 }
 
 //----------------------------------------------------------------------------
@@ -947,11 +787,6 @@ function setEventListeners(){
 
 function initWebGL( canvas ) {
 	try {
-		
-		// Create the WebGL context
-		
-		// Some browsers still need "experimental-webgl"
-		
 		gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
 		
 		// DEFAULT: The viewport occupies the whole canvas 
@@ -961,21 +796,12 @@ function initWebGL( canvas ) {
 		// NEW - Drawing the triangles defining the model
 		
 		primitiveType = gl.TRIANGLES;
-		
-		// DEFAULT: Face culling is DISABLED
-		
+
 		// Enable FACE CULLING
-		
 		gl.enable( gl.CULL_FACE );
-		
-		// DEFAULT: The BACK FACE is culled!!
-		
-		// The next instruction is not needed...
-		
 		gl.cullFace( gl.BACK );
 
 		// Enable DEPTH-TEST
-		
 		gl.enable( gl.DEPTH_TEST );        
 	} catch (e) {
 	}

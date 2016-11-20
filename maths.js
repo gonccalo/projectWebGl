@@ -44,7 +44,6 @@ function vec2()
 function vec3()
 {
     var result = _argumentsToArray( arguments );
-
     switch ( result.length ) {
     case 0: result.push( 0.0 );
     case 1: result.push( 0.0 );
@@ -57,7 +56,6 @@ function vec3()
 function vec4()
 {
     var result = _argumentsToArray( arguments );
-
     switch ( result.length ) {
     case 0: result.push( 0.0 );
     case 1: result.push( 0.0 );
@@ -157,7 +155,6 @@ function mat4()
     }
 
     m.matrix = true;
-
     return m;
 }
 

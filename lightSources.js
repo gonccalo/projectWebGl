@@ -160,7 +160,7 @@ lightSources[0].setIntensity( 1.0, 0.0, 0.0 );
 
 lightSources[0].setAmbIntensity( 0.2, 0.0, 0.0 );
 
-lightSources[0].switchRotYYOn();
+lightSources[0].switchRotYYOff();
 
 // Light source 1
 
@@ -172,7 +172,7 @@ lightSources[1].setIntensity( 0.0, 0.0, 1.0 );
 
 lightSources[1].setAmbIntensity( 0.0, 0.0, 0.2 );
 
-lightSources[1].switchRotYYOn();
+lightSources[1].switchRotYYOff();
 
 //light source 2
 
