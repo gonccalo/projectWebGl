@@ -538,7 +538,6 @@ function drawModel( sx, sy, sz,
 					primitiveType ) {					 
 
 	mvMatrix = mult( mvMatrix, translationMatrix( tx, ty, tz ));
-	
 	mvMatrix = mult( mvMatrix, scalingMatrix( sx, sy, sz ) );
 						 
 	// Passing the Model View Matrix to apply the current transformation
@@ -562,28 +561,12 @@ function drawModel( sx, sy, sz,
 	
 	// This can be done in a better way !!
 
-	initBuffers();
+	//initBuffers();
 	
 	// Drawing 
 	
 	// primitiveType allows drawing as filled triangles / wireframe / vertices
 	gl.drawArrays(primitiveType, 0, triangleVertexPositionBuffer.numItems);
-	
-	/*
-	if( primitiveType == gl.LINE_LOOP ) {
-		var i;
-		
-		for( i = 0; i < triangleVertexPositionBuffer.numItems / 3; i++ ) {
-		
-			gl.drawArrays( primitiveType, 3 * i, 3 ); 
-		}
-	}	
-	else {
-				
-		gl.drawArrays(primitiveType, 0, triangleVertexPositionBuffer.numItems); 
-		
-	}
-	*/	
 }
 
 //----------------------------------------------------------------------------
@@ -601,7 +584,7 @@ function drawScene() {
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	
 	// Computing the Projection Matrix
-	pMatrix = perspective( 90, 1, 0.05, 15 );
+	pMatrix = perspective( 90, 1, 0.0001, 15 );
 	
 	// Passing the Projection Matrix to apply the current projection
 	
@@ -612,14 +595,18 @@ function drawScene() {
 	// GLOBAL TRANSFORMATION FOR THE WHOLE SCENE
 	delete pMatrix;
 	delete pUniform;
-
+	var tempTz = globalTz;
+	var tempTx = oldTx;
 	mvMatrix = rotationYYMatrix(globalTx);
 	oldTx = oldTx + ((-Math.sin(radians(globalTx))) * andar);
 	globalTz = globalTz + (Math.cos(radians(globalTx)) * andar);
 	andar = 0.0;
+	if(check_col(oldTx, globalTz)){
+		globalTz = tempTz;
+		oldTx = tempTx;
+	}
 	mvMatrix = mult(mvMatrix, translationMatrix( oldTx, 0, globalTz));
-
-
+	
 	for(var i = 0; i< labirin.length; i++){
 		drawModel( sx, sy, sz,
 	               labirin[i][0], 0, labirin[i][2],
@@ -703,6 +690,20 @@ function tick() {
 	animate();
 }
 
+function check_col(x,y) {
+	for (var i = 0; i < labirin.length; i++) {
+		var maxX = - (labirin[i][0] - 0.125);
+		var minX = - (labirin[i][0] + 0.125);
+
+		var maxY = - (labirin[i][2] - 0.125);
+		var minY = - (labirin[i][2] + 0.125);
+
+		if((x >= minX && x <= maxX) && (y >= minY && y <= maxY)){
+			return true;
+		}
+	}
+	return false;
+}
 //----------------------------------------------------------------------------
 //
 //  User Interaction
@@ -726,7 +727,8 @@ function setEventListeners(){
 			for (var i = 0; i < tokens.length; i++) {
 				for (var j = 0; j < tokens[i].length; j++){
 					if(tokens[i][j] == '+'){
-						var ob = [(-0.375+(j*0.25)), 0, (0.375 + (i*-0.25))];
+						var ob = [(-0.25+(j*0.25)), 0, (0.125 + (i*-0.25))];
+						//var ob = [(-0.75+(j*0.5)), 0, (0.75 + (i*-0.5))];
 						labirin.push(ob);
 					}
 				}
@@ -737,28 +739,6 @@ function setEventListeners(){
 			
 		reader.readAsText( file );		
 	}
-
-	// Dropdown list
-	var list = document.getElementById("rendering-mode-selection");
-	list.addEventListener("click", function(){
-				
-		// Getting the selection
-		
-		var mode = list.selectedIndex;
-				
-		switch(mode){
-			
-			case 0 : primitiveType = gl.TRIANGLES;
-				break;
-			
-			case 1 : primitiveType = gl.LINE_LOOP;
-				break;
-			
-			case 2 : primitiveType = gl.POINTS;
-				break;
-		}
-	});      
-
 	// Button events
 	
 	
