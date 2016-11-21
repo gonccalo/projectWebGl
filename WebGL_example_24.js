@@ -32,9 +32,8 @@ var oldTx = 0.0;
 var globalTx = 0.0;
 var labirin = [];
 // The local transformation parameters
-
+var neheTexture;
 // The translation vector
-var count = 0;
 var tx = 0.0;
 
 var ty = 0.0;
@@ -292,25 +291,86 @@ function initBuffers() {
 	triangleVertexPositionBuffer.itemSize = 3;
 	triangleVertexPositionBuffer.numItems = vertices.length / 3;			
 
-	// Associating to the vertex shader
-	
 	gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, 
 			triangleVertexPositionBuffer.itemSize, 
 			gl.FLOAT, false, 0, 0);
 	
 	// Colors
-	
+	/*
 	triangleVertexColorBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexColorBuffer);
 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.DYNAMIC_DRAW);
 	triangleVertexColorBuffer.itemSize = 3;
 	triangleVertexColorBuffer.numItems = colors.length / 3;			
 
-	// Associating to the vertex shader
-	
 	gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, 
 			triangleVertexColorBuffer.itemSize, 
 			gl.FLOAT, false, 0, 0);
+	*/
+	//texture
+
+	var cubeVertexTextureCoordBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexTextureCoordBuffer);
+    var textureCoords = [
+      // Front face
+      0.0, 0.0,
+      1.0, 0.0,
+      1.0, 1.0,
+      
+      1.0, 1.0,
+      0.0, 1.0,
+      0.0, 0.0,
+
+      // Top face
+      0.0, 1.0,
+      0.0, 0.0,
+      1.0, 0.0,
+
+      1.0, 0.0,
+      1.0, 1.0,
+      0.0, 1.0,
+
+	  // Bottom face
+      1.0, 1.0,
+      0.0, 1.0,
+      0.0, 0.0,
+
+      0.0, 0.0,
+      1.0, 0.0,
+      1.0, 1.0,
+
+      // Left face
+      0.0, 1.0,
+      1.0, 0.0,
+      0.0, 0.0,
+
+      0.0, 1.0,
+      1.0, 1.0,
+      1.0, 0.0,
+
+      // Right face
+      1.0, 1.0,
+      0.0, 0.0,
+      1.0, 0.0,
+
+      1.0, 1.0,
+      0.0, 1.0,
+      0.0, 0.0,
+
+      // Back face
+      0.0, 1.0,
+      1.0, 0.0,
+      0.0, 0.0,
+
+      0.0, 1.0,
+      1.0, 1.0,
+      1.0, 0.0,
+    ];
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCoords), gl.STATIC_DRAW);
+    cubeVertexTextureCoordBuffer.itemSize = 2;
+    cubeVertexTextureCoordBuffer.numItems = 36;
+    gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, cubeVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
 }
 
 //----------------------------------------------------------------------------
@@ -353,9 +413,6 @@ function computeIllumination( mvMatrix ) {
         normalize( vectorN );
 
 		// VIEWER POSITION
-		
-		//var vectorV = [0,0,0];//vec3();
-		
 		var vectorV = symmetric( pointP );
 		
         normalize( vectorV );
@@ -363,7 +420,6 @@ function computeIllumination( mvMatrix ) {
 	    // Compute the 3 components: AMBIENT, DIFFUSE and SPECULAR
 	    
 	    // FOR EACH LIGHT SOURCE
-	    //var tmp_lightSourceMatrix = mat4();
 	    for(var l = 0; l < lightSources.length; l++ )
 	    {
 			if( lightSources[l].isOff() ) {
@@ -389,7 +445,7 @@ function computeIllumination( mvMatrix ) {
 		    
 		    // Animating the light source, if defined
 		    
-		    var lightSourceMatrix = [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]];// mat4();//tmp_lightSourceMatrix;
+		    var lightSourceMatrix = [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]];// mat4();
 		    lightSourceMatrix.matrix = true;
 		    // COMPLETE THE CODE FOR THE OTHER ROTATION AXES
 		    
@@ -413,7 +469,7 @@ function computeIllumination( mvMatrix ) {
 	    
 	        // DIFFUSE ILLUMINATION
 	        
-	        var vectorL = [0,0,0,0];//vec4();
+	        var vectorL = [0,0,0,1];//vec4();
 	
 	        if( pos_Light_Source[3] == 0.0 )
 	        {
@@ -520,7 +576,7 @@ function drawModel( sx, sy, sz,
 	gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
 	mvUniform = null;
 	
-	computeIllumination( mvMatrix );
+	//computeIllumination( mvMatrix );
 
 	// Associating the data to the vertex shader
 	// This can be done in a better way !!
@@ -528,12 +584,17 @@ function drawModel( sx, sy, sz,
 	//initBuffers();
 	
 	// Drawing 
+	/*
 	gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexColorBuffer);
 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
 	gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, 
 			triangleVertexColorBuffer.itemSize, 
 			gl.FLOAT, false, 0, 0);
-	
+	*/
+
+	gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, neheTexture);
+    gl.uniform1i(shaderProgram.samplerUniform, 0);
 	gl.drawArrays(gl.TRIANGLES, 0, 36);
 
 }
@@ -562,6 +623,8 @@ function drawScene() {
 	
 	gl.uniformMatrix4fv(pUniform, false, new Float32Array(flatten(pMatrix)));
 	
+
+
 	// GLOBAL TRANSFORMATION FOR THE WHOLE SCENE
 	pMatrix = null;
 	pUniform = null;
@@ -714,6 +777,22 @@ function setEventListeners(){
 	};          
 }
 
+function initTexture() {
+    neheTexture = gl.createTexture();
+    neheTexture.image = new Image();
+    neheTexture.image.onload = function() {
+      handleLoadedTexture(neheTexture)
+    }
+    neheTexture.image.src = "ttt.gif";
+}
+function handleLoadedTexture(texture) {
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.image);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+}
 //----------------------------------------------------------------------------
 //
 // WebGL Initialization
@@ -753,7 +832,7 @@ function runWebGL() {
 	setEventListeners();
 	
 	initBuffers();
-	
+	initTexture();
 	tick();		// NEW --- A timer controls the rendering / animation    
 
 	outputInfos();

@@ -71,9 +71,13 @@ function initShaders( gl ) {
 	gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
 
 	// Colors 
-	
+	/*
 	shaderProgram.vertexColorAttribute = gl.getAttribLocation(shaderProgram, "aVertexColor");
 	gl.enableVertexAttribArray(shaderProgram.vertexColorAttribute);
-	
+	*/
+	//Texture
+	shaderProgram.textureCoordAttribute = gl.getAttribLocation(shaderProgram, "aTextureCoord");
+    gl.enableVertexAttribArray(shaderProgram.textureCoordAttribute);
+    shaderProgram.samplerUniform = gl.getUniformLocation(shaderProgram, "uSampler");
 	return shaderProgram;
 }
