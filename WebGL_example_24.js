@@ -20,10 +20,8 @@ var gl = null; // WebGL context
 
 var shaderProgram = null;
 
-var triangleVertexPositionBuffer = null;
-	
-var triangleVertexColorBuffer = null;
 
+var triangleVertexColorBuffer = null;
 // The GLOBAL transformation parameters
 
 var globalAngleYY = 0.0;
@@ -52,14 +50,6 @@ var sy = 0.5;
 
 var sz = 0.5;
 
-// To allow choosing the way of drawing the model triangles
-
-var primitiveType = null;
- 
-// To allow choosing the projection type
-
-var projectionType = 1;
-
 // NEW --- Model Material Features
 
 // Ambient coef.
@@ -85,6 +75,10 @@ var normals = [
 		 
 		 0.0,  0.0,  1.0,
 		 
+		 0.0,  0.0,  1.0,
+
+		 0.0,  0.0,  1.0,
+		 0.0,  0.0,  1.0,
 		 0.0,  0.0,  1.0,
 ];
 
@@ -291,10 +285,10 @@ var colors = [
 function initBuffers() {	
 	
 	// Coordinates
-		
+	var triangleVertexPositionBuffer = null;	
 	triangleVertexPositionBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexPositionBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.DYNAMIC_DRAW);
 	triangleVertexPositionBuffer.itemSize = 3;
 	triangleVertexPositionBuffer.numItems = vertices.length / 3;			
 
@@ -305,10 +299,10 @@ function initBuffers() {
 			gl.FLOAT, false, 0, 0);
 	
 	// Colors
-		
+	
 	triangleVertexColorBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexColorBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.DYNAMIC_DRAW);
 	triangleVertexColorBuffer.itemSize = 3;
 	triangleVertexColorBuffer.numItems = colors.length / 3;			
 
@@ -326,14 +320,7 @@ function initBuffers() {
 function computeIllumination( mvMatrix ) {
 
 	// Phong Illumination Model
-	
-	// Clearing the colors array
-	
-	for( var i = 0; i < colors.length; i++ )
-	{
-		colors[i] = 0.0;
-	}
-	
+	colors.fill(0);
     // SMOOTH-SHADING 
 
     // Compute the illumination for every vertex
@@ -342,6 +329,7 @@ function computeIllumination( mvMatrix ) {
     
     for( var vertIndex = 0; vertIndex < vertices.length; vertIndex += 3 )
     {	
+
 		// For every vertex
 		
 		// GET COORDINATES AND NORMAL VECTOR
@@ -366,29 +354,16 @@ function computeIllumination( mvMatrix ) {
 
 		// VIEWER POSITION
 		
-		var vectorV = vec3();
+		//var vectorV = [0,0,0];//vec3();
 		
-		if( projectionType == 0 ) {
-		
-			// Orthogonal 
-			
-			vectorV[2] = 1.0;
-		}	
-		else {
-			
-		    // Perspective
-		    
-		    // Viewer at ( 0, 0 , 0 )
-		
-			vectorV = symmetric( pointP );
-		}
+		var vectorV = symmetric( pointP );
 		
         normalize( vectorV );
 
 	    // Compute the 3 components: AMBIENT, DIFFUSE and SPECULAR
 	    
 	    // FOR EACH LIGHT SOURCE
-	    
+	    //var tmp_lightSourceMatrix = mat4();
 	    for(var l = 0; l < lightSources.length; l++ )
 	    {
 			if( lightSources[l].isOff() ) {
@@ -398,11 +373,11 @@ function computeIllumination( mvMatrix ) {
 			
 	        // INITIALIZE EACH COMPONENT, with the constant terms
 	
-		    var ambientTerm = vec3();
+		    var ambientTerm = [0,0,0];//vec3();
 		
-		    var diffuseTerm = vec3();
+		    var diffuseTerm = [0,0,0];//vec3();
 		
-		    var specularTerm = vec3();
+		    var specularTerm = [0,0,0];//vec3();
 		
 		    // For the current light source
 		
@@ -414,8 +389,8 @@ function computeIllumination( mvMatrix ) {
 		    
 		    // Animating the light source, if defined
 		    
-		    var lightSourceMatrix = mat4();
-		    
+		    var lightSourceMatrix = [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]];// mat4();//tmp_lightSourceMatrix;
+		    lightSourceMatrix.matrix = true;
 		    // COMPLETE THE CODE FOR THE OTHER ROTATION AXES
 		    
 		    if( lightSources[l].isRotYYOn() ) 
@@ -438,7 +413,7 @@ function computeIllumination( mvMatrix ) {
 	    
 	        // DIFFUSE ILLUMINATION
 	        
-	        var vectorL = vec4();
+	        var vectorL = [0,0,0,0];//vec4();
 	
 	        if( pos_Light_Source[3] == 0.0 )
 	        {
@@ -463,7 +438,7 @@ function computeIllumination( mvMatrix ) {
 	                vectorL[ i ] -= pointP[ i ];
 	            }
 	        }
-	
+			lightSourceMatrix = null;
 			// Back to Euclidean coordinates
 			
 			vectorL = vectorL.slice(0,3);
@@ -482,7 +457,7 @@ function computeIllumination( mvMatrix ) {
 	        // SEPCULAR ILLUMINATION 
 	
 	        var vectorH = add( vectorL, vectorV );
-	
+			
 	        normalize( vectorH );
 	
 	        var cosNH = dotProduct( vectorN, vectorH );
@@ -534,8 +509,7 @@ function computeIllumination( mvMatrix ) {
 
 function drawModel( sx, sy, sz,
 					tx, ty, tz,
-					mvMatrix,
-					primitiveType ) {					 
+					mvMatrix) {					 
 
 	mvMatrix = mult( mvMatrix, translationMatrix( tx, ty, tz ));
 	mvMatrix = mult( mvMatrix, scalingMatrix( sx, sy, sz ) );
@@ -543,30 +517,25 @@ function drawModel( sx, sy, sz,
 	// Passing the Model View Matrix to apply the current transformation
 	
 	var mvUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
-	
 	gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
-	delete mvUniform;
-	delete mvMatrix;
-	// NEW - Aux. Function for computing the illumination
-	//if (count > 5){
-		//computeIllumination( mvMatrix );
-	//	count = 0;
-	//}
-	//else{
-	//	count += 1;
-	//}
+	mvUniform = null;
 	
-	
+	computeIllumination( mvMatrix );
+
 	// Associating the data to the vertex shader
-	
 	// This can be done in a better way !!
 
 	//initBuffers();
 	
 	// Drawing 
+	gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexColorBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
+	gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, 
+			triangleVertexColorBuffer.itemSize, 
+			gl.FLOAT, false, 0, 0);
 	
-	// primitiveType allows drawing as filled triangles / wireframe / vertices
-	gl.drawArrays(primitiveType, 0, triangleVertexPositionBuffer.numItems);
+	gl.drawArrays(gl.TRIANGLES, 0, 36);
+
 }
 
 //----------------------------------------------------------------------------
@@ -577,7 +546,8 @@ function drawScene() {
 	
 	var pMatrix;
 	
-	var mvMatrix = mat4();
+	var mvMatrix = [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]];//mat4();
+	mvMatrix.matrix = true;
 	
 	// Clearing the frame-buffer and the depth-buffer
 	
@@ -593,8 +563,8 @@ function drawScene() {
 	gl.uniformMatrix4fv(pUniform, false, new Float32Array(flatten(pMatrix)));
 	
 	// GLOBAL TRANSFORMATION FOR THE WHOLE SCENE
-	delete pMatrix;
-	delete pUniform;
+	pMatrix = null;
+	pUniform = null;
 	var tempTz = globalTz;
 	var tempTx = oldTx;
 	mvMatrix = rotationYYMatrix(globalTx);
@@ -610,25 +580,9 @@ function drawScene() {
 	for(var i = 0; i< labirin.length; i++){
 		drawModel( sx, sy, sz,
 	               labirin[i][0], 0, labirin[i][2],
-	               mvMatrix,
-	               primitiveType );
+	               mvMatrix);
 	}
-	delete mvMatrix;
-	//mvMatrix = mult(rotationYYMatrix(globalTx), mvMatrix);
-	/*
-	// Instantianting the current model
-	for (var i = 0; i < tokens.length; i++) {
-		for (var j = 0; j < tokens[i].length; j++){
-			if(tokens[i][j] == '+'){
-				drawModel( angleXX, angleYY, angleZZ, 
-	           sx, sy, sz,
-	           tx + (-0.375+(j*0.25)), ty, tz +(0.375 + (i*-0.25) ),
-	           mvMatrix,
-	           primitiveType );
-			}
-		}
-	}
-	*/	
+	mvMatrix = null;
 }
 
 //----------------------------------------------------------------------------
@@ -734,7 +688,7 @@ function setEventListeners(){
 				}
 			}			
 			console.log(tokens);
-			delete tokens;
+			tokens = null;
 		};
 			
 		reader.readAsText( file );		
@@ -772,10 +726,6 @@ function initWebGL( canvas ) {
 		// DEFAULT: The viewport occupies the whole canvas 
 		
 		// DEFAULT: The viewport background color is WHITE
-		
-		// NEW - Drawing the triangles defining the model
-		
-		primitiveType = gl.TRIANGLES;
 
 		// Enable FACE CULLING
 		gl.enable( gl.CULL_FACE );

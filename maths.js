@@ -567,7 +567,7 @@ function normalize( v )
 
 function symmetric( v )
 {
-    var result = vec3();
+    var result = [0,0,0];
     
     for( i = 0; i < 3; i++ ) {
         
@@ -599,7 +599,7 @@ function dotProduct( v1, v2 )
 
 function vectorProduct( v1, v2 )
 {
-    var res = vec3();
+    var res = [0,0,0];
 
 	res[0] = v1[1] * v2[2] - v1[2] * v2[1];
 
@@ -647,7 +647,7 @@ function computeNormalVector( p0, p1, p2 )
 
 function multiplyPointByMatrix( m, p )
 {
-	var result = vec4();
+	var result = [0,0,0,1];
 	
 	for( var i = 0; i < 4; i++ ) {
 		
@@ -662,7 +662,7 @@ function multiplyPointByMatrix( m, p )
 
 function multiplyVectorByMatrix( m, p )
 {
-	var result = vec4();
+	var result = [0,0,0,1];
 	
 	for( var i = 0; i < 4; i++ ) {
 		
