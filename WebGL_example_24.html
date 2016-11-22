@@ -67,14 +67,14 @@ Passing the Model-View Matrix and the Projection Matrix.
 	
 	varying vec2 vTextureCoord;
 
-    uniform sampler2D uSampler;
+    uniform sampler2D uSampler0;
 
 	//varying vec4 vertexColor;
 	
 	void main(void) {
 		
 		// Using the passed vertex color
-		gl_FragColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));
+		gl_FragColor = texture2D(uSampler0, vTextureCoord);
 		//gl_FragColor = vertexColor;
 	}
 
@@ -114,6 +114,8 @@ Passing the Model-View Matrix and the Projection Matrix.
         <p>Read a 3D model from a text file:
 		
 		<input type="file" id="file" name="file">
+		<input type="file" id="textureWall" name="tex">
+		<input type="file" id="textureFloor" name="texf">
 		
 		</p>
 				

@@ -286,9 +286,6 @@ function mult( u, v )
             if ( u[i].length != v[i].length ) {
                 throw "mult(): trying to add matrices of different dimensions";
             }
-        }
-
-        for ( var i = 0; i < u.length; ++i ) {
             result.push( [] );
 
             for ( var j = 0; j < v.length; ++j ) {
@@ -299,9 +296,7 @@ function mult( u, v )
                 result[i].push( sum );
             }
         }
-
         result.matrix = true;
-
         return result;
     }
     else {
@@ -400,7 +395,9 @@ var sizeof = {
 
 function rotationXXMatrix( degrees )
 {
-	m = mat4();
+    var m = [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]];// mat4();
+    m.matrix = true;
+	//m = mat4();
 	
 	m[1][1] = Math.cos( radians( degrees ) );
 	
@@ -415,7 +412,9 @@ function rotationXXMatrix( degrees )
 
 function rotationYYMatrix( degrees )
 {
-	m = mat4();
+    var m = [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]];// mat4();
+    m.matrix = true;
+	//m = mat4();
 	
 	m[0][0] = Math.cos( radians( degrees ) );
 	
@@ -430,7 +429,9 @@ function rotationYYMatrix( degrees )
 
 function rotationZZMatrix( degrees )
 {
-	m = mat4();
+    var m = [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]];// mat4();
+    m.matrix = true;
+	//m = mat4();
 	
 	m[0][0] = Math.cos( radians( degrees ) );
 	
@@ -445,7 +446,9 @@ function rotationZZMatrix( degrees )
 
 function scalingMatrix( sx, sy, sz )
 {
-	m = mat4();
+    var m = [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]];// mat4();
+    m.matrix = true;
+	//m = mat4();
 	
 	m[0][0] = sx;
 	
@@ -458,7 +461,9 @@ function scalingMatrix( sx, sy, sz )
 
 function translationMatrix( tx, ty, tz )
 {
-	m = mat4();
+    var m = [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]];// mat4();
+    m.matrix = true;
+	//m = mat4();
 	
 	m[0][3] = tx;
 	
@@ -503,7 +508,9 @@ function perspective( fovy, aspect, near, far )
     var f = 1.0 / Math.tan( radians(fovy) / 2 );
     var d = far - near;
 
-    var result = mat4();
+    var result = [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]];// mat4();
+    result.matrix = true;
+    //var result = mat4();
     
     result[0][0] = f / aspect;
     result[1][1] = f;

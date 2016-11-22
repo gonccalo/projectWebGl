@@ -78,6 +78,6 @@ function initShaders( gl ) {
 	//Texture
 	shaderProgram.textureCoordAttribute = gl.getAttribLocation(shaderProgram, "aTextureCoord");
     gl.enableVertexAttribArray(shaderProgram.textureCoordAttribute);
-    shaderProgram.samplerUniform = gl.getUniformLocation(shaderProgram, "uSampler");
+    shaderProgram.samplerUniform0 = gl.getUniformLocation(shaderProgram, "uSampler0");
 	return shaderProgram;
 }

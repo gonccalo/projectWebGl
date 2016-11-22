@@ -19,35 +19,23 @@
 var gl = null; // WebGL context
 
 var shaderProgram = null;
-
-
-var triangleVertexColorBuffer = null;
+var triangleVertexPositionBuffer = null;
+var floorVertexBuffer = null;
+var wallVertexTextureCoordBuffer = null;
+var floorVertexTextureCoordBuffer = null;
+//var triangleVertexColorBuffer = null;
 // The GLOBAL transformation parameters
-
-var globalAngleYY = 0.0;
 
 var globalTz = 0.0;
 var andar = 0.0;
+var rodar = 0.0;
 var oldTx = 0.0;
 var globalTx = 0.0;
 var labirin = [];
-// The local transformation parameters
+
+// textures
 var neheTexture;
-// The translation vector
-var tx = 0.0;
-
-var ty = 0.0;
-
-var tz = 0.0;
-
-// The rotation angles in degrees
-// The scaling factors
-
-var sx = 0.5;
-
-var sy = 0.5;
-
-var sz = 0.5;
+var floorTexture;
 
 // NEW --- Model Material Features
 
@@ -283,8 +271,7 @@ var colors = [
 
 function initBuffers() {	
 	
-	// Coordinates
-	var triangleVertexPositionBuffer = null;	
+	// Coordinates	
 	triangleVertexPositionBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexPositionBuffer);
 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.DYNAMIC_DRAW);
@@ -293,6 +280,32 @@ function initBuffers() {
 
 	gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, 
 			triangleVertexPositionBuffer.itemSize, 
+			gl.FLOAT, false, 0, 0);
+	
+
+	//floor
+
+	floorVertexBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, floorVertexBuffer);
+	var floor = [
+                      -0.25,  -0.25,  0.25,
+		 
+				       0.25,  -0.25,  0.25,
+		 
+				       0.25,  -0.25, -0.25,
+
+			      	   0.25,  -0.25, -0.25,
+		 
+		              -0.25,  -0.25, -0.25,
+		 
+			          -0.25,  -0.25,  0.25,
+					]
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(floor), gl.DYNAMIC_DRAW);
+	floorVertexBuffer.itemSize = 3;
+	floorVertexBuffer.numItems = floor.length / 3;
+	
+	gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, 
+			floorVertexBuffer.itemSize, 
 			gl.FLOAT, false, 0, 0);
 	
 	// Colors
@@ -307,11 +320,11 @@ function initBuffers() {
 			triangleVertexColorBuffer.itemSize, 
 			gl.FLOAT, false, 0, 0);
 	*/
-	//texture
-
-	var cubeVertexTextureCoordBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexTextureCoordBuffer);
-    var textureCoords = [
+	
+	// wall texture
+	wallVertexTextureCoordBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, wallVertexTextureCoordBuffer);
+    var wallTextureCoords = [
       // Front face
       0.0, 0.0,
       1.0, 0.0,
@@ -366,11 +379,30 @@ function initBuffers() {
       1.0, 1.0,
       1.0, 0.0,
     ];
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCoords), gl.STATIC_DRAW);
-    cubeVertexTextureCoordBuffer.itemSize = 2;
-    cubeVertexTextureCoordBuffer.numItems = 36;
-    gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, cubeVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(wallTextureCoords), gl.STATIC_DRAW);
+    wallVertexTextureCoordBuffer.itemSize = 2;
+    wallVertexTextureCoordBuffer.numItems = 36;
+    gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, wallVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
+    //floor texture
+    floorVertexTextureCoordBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, floorVertexTextureCoordBuffer);
+    var floorTextureCoords = [
+      0.0, 1.0,
+      0.0, 0.0,
+      1.0, 0.0,
+
+      1.0, 0.0,
+      1.0, 1.0,
+      0.0, 1.0,
+    ];
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(floorTextureCoords), gl.STATIC_DRAW);
+    floorVertexTextureCoordBuffer.itemSize = 2;
+    floorVertexTextureCoordBuffer.numItems = 6;
+    gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, floorVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+    gl.uniform1i(shaderProgram.samplerUniform0, 0);
+    gl.activeTexture(gl.TEXTURE0);
 }
 
 //----------------------------------------------------------------------------
@@ -563,12 +595,11 @@ function computeIllumination( mvMatrix ) {
 	}
 }
 
-function drawModel( sx, sy, sz,
-					tx, ty, tz,
-					mvMatrix) {					 
+function drawModel(	tx, ty, tz,
+					mvMatrix, isWall) {					 
 
 	mvMatrix = mult( mvMatrix, translationMatrix( tx, ty, tz ));
-	mvMatrix = mult( mvMatrix, scalingMatrix( sx, sy, sz ) );
+	mvMatrix = mult( mvMatrix, scalingMatrix( 0.5, 0.5, 0.5 ) );
 						 
 	// Passing the Model View Matrix to apply the current transformation
 	
@@ -577,11 +608,6 @@ function drawModel( sx, sy, sz,
 	mvUniform = null;
 	
 	//computeIllumination( mvMatrix );
-
-	// Associating the data to the vertex shader
-	// This can be done in a better way !!
-
-	//initBuffers();
 	
 	// Drawing 
 	/*
@@ -591,12 +617,27 @@ function drawModel( sx, sy, sz,
 			triangleVertexColorBuffer.itemSize, 
 			gl.FLOAT, false, 0, 0);
 	*/
-
-	gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, neheTexture);
-    gl.uniform1i(shaderProgram.samplerUniform, 0);
-	gl.drawArrays(gl.TRIANGLES, 0, 36);
-
+	if (isWall) {
+		gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexPositionBuffer);
+		gl.vertexAttribPointer( shaderProgram.vertexPositionAttribute, 
+								triangleVertexPositionBuffer.itemSize, 
+								gl.FLOAT, false, 0, 0);
+		gl.bindBuffer(gl.ARRAY_BUFFER, wallVertexTextureCoordBuffer);
+		gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, wallVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+    	gl.bindTexture(gl.TEXTURE_2D, neheTexture);
+    	gl.drawArrays(gl.TRIANGLES, 0, triangleVertexPositionBuffer.numItems);
+	}
+	else{
+		
+		gl.bindBuffer(gl.ARRAY_BUFFER, floorVertexBuffer);
+		gl.vertexAttribPointer( shaderProgram.vertexPositionAttribute, 
+								floorVertexBuffer.itemSize, 
+								gl.FLOAT, false, 0, 0);
+		gl.bindBuffer(gl.ARRAY_BUFFER, floorVertexTextureCoordBuffer);
+		gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, floorVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+    	gl.bindTexture(gl.TEXTURE_2D, floorTexture);
+		gl.drawArrays(gl.TRIANGLES, 0, floorVertexBuffer.numItems);
+	}
 }
 
 //----------------------------------------------------------------------------
@@ -622,18 +663,18 @@ function drawScene() {
 	var pUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
 	
 	gl.uniformMatrix4fv(pUniform, false, new Float32Array(flatten(pMatrix)));
-	
+	pMatrix = null;
+	pUniform = null;
 
 
 	// GLOBAL TRANSFORMATION FOR THE WHOLE SCENE
-	pMatrix = null;
-	pUniform = null;
 	var tempTz = globalTz;
 	var tempTx = oldTx;
+	globalTx += rodar; 
 	mvMatrix = rotationYYMatrix(globalTx);
 	oldTx = oldTx + ((-Math.sin(radians(globalTx))) * andar);
 	globalTz = globalTz + (Math.cos(radians(globalTx)) * andar);
-	andar = 0.0;
+	//andar = 0.0;
 	if(check_col(oldTx, globalTz)){
 		globalTz = tempTz;
 		oldTx = tempTx;
@@ -641,9 +682,14 @@ function drawScene() {
 	mvMatrix = mult(mvMatrix, translationMatrix( oldTx, 0, globalTz));
 	
 	for(var i = 0; i< labirin.length; i++){
-		drawModel( sx, sy, sz,
-	               labirin[i][0], 0, labirin[i][2],
-	               mvMatrix);
+		if(labirin[i][1] != -1){
+			drawModel( labirin[i][0], 0, labirin[i][2],
+	                   mvMatrix, true);
+		}
+		else{
+			drawModel( labirin[i][0], 0, labirin[i][2],
+					   mvMatrix, false);
+		}
 	}
 	mvMatrix = null;
 }
@@ -704,11 +750,14 @@ function tick() {
 	
 	drawScene();
 	
-	animate();
+	//animate();
 }
 
 function check_col(x,y) {
 	for (var i = 0; i < labirin.length; i++) {
+		if(labirin[i][1] == -1){
+			continue;
+		}
 		var maxX = - (labirin[i][0] - 0.125);
 		var minX = - (labirin[i][0] + 0.125);
 
@@ -748,6 +797,11 @@ function setEventListeners(){
 						//var ob = [(-0.75+(j*0.5)), 0, (0.75 + (i*-0.5))];
 						labirin.push(ob);
 					}
+					else if (tokens[i][j] == '-'){
+						var ob = [(-0.25+(j*0.25)), -1, (0.125 + (i*-0.25))];
+						//var ob = [(-0.75+(j*0.5)), 0, (0.75 + (i*-0.5))];
+						labirin.push(ob);	
+					}
 				}
 			}			
 			console.log(tokens);
@@ -756,35 +810,90 @@ function setEventListeners(){
 			
 		reader.readAsText( file );		
 	}
-	// Button events
+	
+	document.getElementById("textureWall").onchange = function(){
+		
+		var file = this.files[0];
+		
+		var reader = new FileReader();
+		
+		reader.onload = function( progressEvent ){
+			neheTexture = gl.createTexture();
+    		neheTexture.image = new Image();
+    		neheTexture.image.onload = function() {
+      			handleLoadedTexture(neheTexture);
+    		};
+    		neheTexture.image.src = this.result;
+		};
+		reader.readAsDataURL( file );		
+	}
+
+	document.getElementById("textureFloor").onchange = function(){
+		
+		var file = this.files[0];
+		
+		var reader = new FileReader();
+		
+		reader.onload = function( progressEvent ){
+			floorTexture = gl.createTexture();
+    		floorTexture.image = new Image();
+    		floorTexture.image.onload = function() {
+      			handleLoadedTexture(floorTexture);
+    		};
+    		floorTexture.image.src = this.result;
+		};
+		reader.readAsDataURL( file );		
+	}
 	
 	
 	document.onkeydown = function(e) {
+		if (e.keyCode == 37){
+			rodar = -1.5;
+		}
+		else if(e.keyCode == 38){
+			andar = 0.01;
+		}
+		else if(e.keyCode == 39){
+			rodar = 1.5;
+		}
+		else if(e.keyCode == 40){
+			andar = -0.01;
+		}
+		/*
     switch (e.keyCode) {
         case 37:
-            globalTx -= 1.5;
+            rodar = -1.5;
             break;
         case 38:
             andar = 0.01;
             break;
         case 39:
-            globalTx += 1.5;
+            rodar = 1.5;
             break;
         case 40:
             andar = -0.01;
             break;
     	}
-	};          
+    	*/
+	};
+	document.onkeyup = function(e) {
+    switch (e.keyCode) {
+    	case 37:
+            rodar = 0;
+            break;
+        case 38:
+            andar = 0;
+            break;
+        case 39:
+            rodar = 0;
+            break;
+        case 40:
+            andar = 0;
+            break;
+    	}
+	};                
 }
 
-function initTexture() {
-    neheTexture = gl.createTexture();
-    neheTexture.image = new Image();
-    neheTexture.image.onload = function() {
-      handleLoadedTexture(neheTexture)
-    }
-    neheTexture.image.src = "ttt.gif";
-}
 function handleLoadedTexture(texture) {
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
@@ -832,7 +941,7 @@ function runWebGL() {
 	setEventListeners();
 	
 	initBuffers();
-	initTexture();
+	//initTexture();
 	tick();		// NEW --- A timer controls the rendering / animation    
 
 	outputInfos();
