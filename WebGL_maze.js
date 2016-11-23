@@ -33,6 +33,8 @@ var oldTx = 0.0;
 var globalTx = 0.0;
 var labirin = [];
 
+var topView = false;
+
 // textures
 var neheTexture;
 var floorTexture;
@@ -595,8 +597,8 @@ function computeIllumination( mvMatrix ) {
 	}
 }
 
-function drawModel(	tx, ty, tz,
-					mvMatrix, isWall) {					 
+function drawModelWall(	tx, ty, tz,
+					mvMatrix) {					 
 
 	mvMatrix = mult( mvMatrix, translationMatrix( tx, ty, tz ));
 	mvMatrix = mult( mvMatrix, scalingMatrix( 0.5, 0.5, 0.5 ) );
@@ -608,37 +610,37 @@ function drawModel(	tx, ty, tz,
 	mvUniform = null;
 	
 	//computeIllumination( mvMatrix );
-	
-	// Drawing 
-	/*
-	gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexColorBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
-	gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, 
-			triangleVertexColorBuffer.itemSize, 
-			gl.FLOAT, false, 0, 0);
-	*/
-	if (isWall) {
-		gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexPositionBuffer);
-		gl.vertexAttribPointer( shaderProgram.vertexPositionAttribute, 
-								triangleVertexPositionBuffer.itemSize, 
-								gl.FLOAT, false, 0, 0);
-		gl.bindBuffer(gl.ARRAY_BUFFER, wallVertexTextureCoordBuffer);
-		gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, wallVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
-    	gl.bindTexture(gl.TEXTURE_2D, neheTexture);
-    	gl.drawArrays(gl.TRIANGLES, 0, triangleVertexPositionBuffer.numItems);
-	}
-	else{
-		
-		gl.bindBuffer(gl.ARRAY_BUFFER, floorVertexBuffer);
-		gl.vertexAttribPointer( shaderProgram.vertexPositionAttribute, 
-								floorVertexBuffer.itemSize, 
-								gl.FLOAT, false, 0, 0);
-		gl.bindBuffer(gl.ARRAY_BUFFER, floorVertexTextureCoordBuffer);
-		gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, floorVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
-    	gl.bindTexture(gl.TEXTURE_2D, floorTexture);
-		gl.drawArrays(gl.TRIANGLES, 0, floorVertexBuffer.numItems);
-	}
+	gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexPositionBuffer);
+	gl.vertexAttribPointer( shaderProgram.vertexPositionAttribute, 
+							triangleVertexPositionBuffer.itemSize, 
+							gl.FLOAT, false, 0, 0);
+	gl.bindBuffer(gl.ARRAY_BUFFER, wallVertexTextureCoordBuffer);
+	gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, wallVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+    gl.bindTexture(gl.TEXTURE_2D, neheTexture);
+    gl.drawArrays(gl.TRIANGLES, 0, triangleVertexPositionBuffer.numItems);
 }
+function drawModelFloor(tx, ty, tz,
+					mvMatrix) {					 
+	mvMatrix = mult( mvMatrix, translationMatrix( tx, ty, tz ));
+	mvMatrix = mult( mvMatrix, scalingMatrix( 0.5, 0.5, 0.5 ) );
+						 
+	// Passing the Model View Matrix to apply the current transformation
+	
+	var mvUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
+	gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
+	mvUniform = null;
+	
+	//computeIllumination( mvMatrix );
+	gl.bindBuffer(gl.ARRAY_BUFFER, floorVertexBuffer);
+	gl.vertexAttribPointer( shaderProgram.vertexPositionAttribute, 
+							floorVertexBuffer.itemSize, 
+							gl.FLOAT, false, 0, 0);
+	gl.bindBuffer(gl.ARRAY_BUFFER, floorVertexTextureCoordBuffer);
+	gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, floorVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+    gl.bindTexture(gl.TEXTURE_2D, floorTexture);
+	gl.drawArrays(gl.TRIANGLES, 0, floorVertexBuffer.numItems);
+}
+
 
 //----------------------------------------------------------------------------
 
@@ -666,29 +668,33 @@ function drawScene() {
 	pMatrix = null;
 	pUniform = null;
 
-
-	// GLOBAL TRANSFORMATION FOR THE WHOLE SCENE
-	var tempTz = globalTz;
-	var tempTx = oldTx;
-	globalTx += rodar; 
-	mvMatrix = rotationYYMatrix(globalTx);
-	oldTx = oldTx + ((-Math.sin(radians(globalTx))) * andar);
-	globalTz = globalTz + (Math.cos(radians(globalTx)) * andar);
-	//andar = 0.0;
-	if(check_col(oldTx, globalTz)){
-		globalTz = tempTz;
-		oldTx = tempTx;
+	if(topView){
+		mvMatrix = rotationXXMatrix(90);
+		mvMatrix = mult(mvMatrix, translationMatrix( oldTx, -3, globalTz));	
 	}
-	mvMatrix = mult(mvMatrix, translationMatrix( oldTx, 0, globalTz));
+	else{
+		var tempTz = globalTz;
+		var tempTx = oldTx;
+		globalTx += rodar; 
+		mvMatrix = rotationYYMatrix(globalTx);
+		oldTx = oldTx + ((-Math.sin(radians(globalTx))) * andar);
+		globalTz = globalTz + (Math.cos(radians(globalTx)) * andar);
+		//andar = 0.0;
+		if(check_col(oldTx, globalTz)){
+			globalTz = tempTz;
+			oldTx = tempTx;
+		}
+		mvMatrix = mult(mvMatrix, translationMatrix( oldTx, 0, globalTz));
+	}
 	
 	for(var i = 0; i< labirin.length; i++){
 		if(labirin[i][1] != -1){
-			drawModel( labirin[i][0], 0, labirin[i][2],
-	                   mvMatrix, true);
+			drawModelWall( labirin[i][0], 0, labirin[i][2],
+	                   mvMatrix);
 		}
 		else{
-			drawModel( labirin[i][0], 0, labirin[i][2],
-					   mvMatrix, false);
+			drawModelFloor( labirin[i][0], 0, labirin[i][2],
+					   mvMatrix);
 		}
 	}
 	mvMatrix = null;
@@ -859,6 +865,9 @@ function setEventListeners(){
 		else if(e.keyCode == 40){
 			andar = -0.01;
 		}
+		else if(e.keyCode == 32){
+			topView = true;
+		}
 		/*
     switch (e.keyCode) {
         case 37:
@@ -890,6 +899,8 @@ function setEventListeners(){
         case 40:
             andar = 0;
             break;
+        case 32:
+        	topView = false;
     	}
 	};                
 }
@@ -898,6 +909,8 @@ function handleLoadedTexture(texture) {
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.image);
+    texture.image = null;
+    delete texture.image;
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.bindTexture(gl.TEXTURE_2D, null);
