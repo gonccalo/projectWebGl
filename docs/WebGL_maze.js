@@ -775,7 +775,10 @@ function outputInfos(){
 
 function setEventListeners(){
 	document.getElementById("file").onchange = function(){
-		
+		labirin = [];
+		globalTz = 0.0;
+		oldTx = 0.0;
+		globalTx = 0.0;
 		var file = this.files[0];
 		var reader = new FileReader();
 		reader.onload = function( progressEvent ){
@@ -792,13 +795,56 @@ function setEventListeners(){
 						//var ob = [(-0.75+(j*0.5)), 0, (0.75 + (i*-0.5))];
 						labirin.push(ob);	
 					}
+					else if(tokens[i][j] == 'p'){
+						var ob = [(-0.25+(j*0.25)), -1, (0.125 + (i*-0.25))];
+						oldTx = -(-0.25+(j*0.25));
+						labirin.push(ob);
+						globalTz = -(0.125 + (i*-0.25));
+					}
 				}
 			}			
 			tokens = null;
 		};
 		reader.readAsText( file );		
 	}
-	
+
+	document.getElementById("mazeSelect").onchange = function(){
+		labirin = [];
+		globalTz = 0.0;
+		oldTx = 0.0;
+		globalTx = 0.0;
+		var mazeSelected = document.getElementById("mazeSelect").value;
+		var tokens = "";
+		if(mazeSelected == "maze1"){
+			tokens = "++++++++++\n+-----++-+\n+-+++----+\n+---++++++\n+++p--++-+\n/+--++-+-+\n++-+++---+\n+----+++++\n+-++-----+\n++++++++++";
+		}
+		else if(mazeSelected == "maze2"){
+			tokens = "+++//////+++++++++++\n+-++++++++----------\n+--------+-+++++++++\n++++++++-+---------+\n///////+-+++++++++-+\n///////+-+---------+\n///////+-+-+++++++++\n///////+-+---------+\n///////+-+++++++++-+\n///////+-----------+\n///////+++++++++++++";
+		}
+		else if(mazeSelected == "arena"){
+			tokens = "++++++++++\n+--------+\n+--------+\n+--------+\n+--------+\n+--------+\n+--------+\n+--------+\n+--------+\n++++++++++";
+		}
+		tokens = tokens.split("\n");
+		for (var i = 0; i < tokens.length; i++) {
+			for (var j = 0; j < tokens[i].length; j++){
+				if(tokens[i][j] == '+'){
+					var ob = [(-0.25+(j*0.25)), 0, (0.125 + (i*-0.25))];
+					labirin.push(ob);
+				}
+				else if (tokens[i][j] == '-'){
+					var ob = [(-0.25+(j*0.25)), -1, (0.125 + (i*-0.25))];
+					labirin.push(ob);	
+				}
+				else if(tokens[i][j] == 'p'){
+					var ob = [(-0.25+(j*0.25)), -1, (0.125 + (i*-0.25))];
+					oldTx = -(-0.25+(j*0.25));
+					labirin.push(ob);
+					globalTz = -(0.125 + (i*-0.25));
+				}
+			}
+		}			
+	}
+
 	document.getElementById("textureWall").onchange = function(){
 		
 		var file = this.files[0];
@@ -831,7 +877,6 @@ function setEventListeners(){
 		reader.readAsDataURL( file );		
 	}
 	
-	
 	document.onkeydown = function(e) {
 		if (e.keyCode == 37){
 			rodar = -1.5;
@@ -848,25 +893,27 @@ function setEventListeners(){
 		else if(e.keyCode == 32){
 			topView = true;
 		}
+		e.preventDefault();
 	};
 
 	document.onkeyup = function(e) {
-    switch (e.keyCode) {
-    	case 37:
-            rodar = 0;
-            break;
-        case 38:
-            andar = 0;
-            break;
-        case 39:
-            rodar = 0;
-            break;
-        case 40:
-            andar = 0;
-            break;
-        case 32:
-        	topView = false;
-    	}
+    	switch (e.keyCode) {
+    		case 37:
+            	rodar = 0;
+            	break;
+        	case 38:
+            	andar = 0;
+            	break;
+        	case 39:
+            	rodar = 0;
+            	break;
+        	case 40:
+            	andar = 0;
+            	break;
+        	case 32:
+        		topView = false;
+    		}
+    	e.preventDefault();
 	};                
 }
 
@@ -906,7 +953,23 @@ function initWebGL( canvas ) {
 }
 
 //----------------------------------------------------------------------------
+function initTextures() {
+	//Walls
+	neheTexture = gl.createTexture();
+    neheTexture.image = new Image();
+    neheTexture.image.onload = function() {
+    	handleLoadedTexture(neheTexture);
+    };
+    neheTexture.image.src = "wall.bmp";
 
+    //Floor
+    floorTexture = gl.createTexture();
+    floorTexture.image = new Image();
+    floorTexture.image.onload = function() {
+      	handleLoadedTexture(floorTexture);
+    };
+    floorTexture.image.src = "floor.bmp";
+}
 function runWebGL() {
 	
 	var canvas = document.getElementById("my-canvas");
@@ -918,7 +981,7 @@ function runWebGL() {
 	setEventListeners();
 	
 	initBuffers();
-	//initTexture();
+	initTextures();
 	tick();		// NEW --- A timer controls the rendering / animation    
 
 	outputInfos();
