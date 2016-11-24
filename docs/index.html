@@ -74,28 +74,58 @@
 
 </head>
 
-<body onload="runWebGL();">
-
-	<div style="text-align: center">
-		<canvas id="my-canvas" style="border:1px solid #000000;" width="550" height="550"></canvas>	
-        
-        <p>Select a maze:
-		<select id="mazeSelect">
-			<option value="maze1">Small</option>
-  			<option value="maze2">Medium</option>
-  			<option value="arena">Arena</option>
-		</select>
-		or upload one: 
-		<input type="file" id="file" name="tex">
-		<tr></tr>
-		Wall texture:
-		<input type="file" id="textureWall" name="tex">
-		<tr></tr>
-		Floor texture:
-		<input type="file" id="textureFloor" name="texf">
-		</p>	
-	</div>
-
+<body onload="runWebGL();" style="background-color: #272822;">
+	<table style="width:100%">
+		<td>
+			<p style="color:white">
+			Select a maze:
+			<select id="mazeSelect">
+				<option value="maze1">Small</option>
+  				<option value="maze2">Medium</option>
+  				<option value="arena">Arena</option>
+			</select>
+			</p>
+			<p style="color:white">
+			Or upload one: 
+			<input type="file" id="file" name="tex">
+			</p>
+			<p style="color:white">
+			<a href="labi">Maze files</a> are text files where:
+			<ul style="color:white">
+  				<li>'+' &rarr; walls</li>
+  				<li>'-' &rarr; floor</li>
+  				<li>'p' &rarr; player</li>
+  				<li>everything else is blank space</li>
+			</ul>	
+			</p>
+			<p style="color:white">
+				Use the arrow keys to move
+			</p>
+			<p style="color:white">
+				Spacebar to see the maze from above 
+			</p>
+			</th>
+		</td>
+		<td>
+			<canvas id="my-canvas" style="border:1px solid #000000;" width="550" height="550"></canvas>	
+        </td>
+		<td>
+			<p style="color:white">
+			Wall texture:
+			<input type="file" id="textureWall" name="tex">
+			</p>
+			<p style="color:white">
+			Floor texture:
+			<input type="file" id="textureFloor" name="texf">
+			</p>
+			<p>
+			<ul style="color:white">
+  				<li>Must be a image</li>
+  				<li>Width and height must be a power of 2</li>
+			</ul>
+			</p>
+		</td>
+	</table>
 </body>
 
 </html>

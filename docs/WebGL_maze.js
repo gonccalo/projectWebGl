@@ -1,16 +1,3 @@
-//////////////////////////////////////////////////////////////////////////////
-//
-//  WebGL_example_24.js 
-//
-//  Phong Illumination Model on the CPU - Several light sources
-//
-//  References: www.learningwebgl.com + E. Angel examples
-//
-//  J. Madeira - October 2015
-//
-//////////////////////////////////////////////////////////////////////////////
-
-
 //----------------------------------------------------------------------------
 //
 // Global Variables
@@ -216,7 +203,7 @@ function initBuffers() {
 		-0.25,  0.25,  0.25,
 		
 		// BOTTOM FACE 
-		
+		/*
 		-0.25, -0.25, -0.25,
 		 
 		 0.25, -0.25, -0.25,
@@ -229,7 +216,7 @@ function initBuffers() {
 		-0.25, -0.25,  0.25,
 		 
 		-0.25, -0.25, -0.25,
-		
+		*/
 		// LEFT FACE 
 		
 		-0.25,  0.25,  0.25,
@@ -341,7 +328,7 @@ function initBuffers() {
       1.0, 0.0,
       1.0, 1.0,
       0.0, 1.0,
-
+      /*
 	  // Bottom face
       1.0, 1.0,
       0.0, 1.0,
@@ -350,7 +337,7 @@ function initBuffers() {
       0.0, 0.0,
       1.0, 0.0,
       1.0, 1.0,
-
+	  */
       // Left face
       0.0, 1.0,
       1.0, 0.0,
@@ -380,7 +367,7 @@ function initBuffers() {
     ];
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(wallTextureCoords), gl.STATIC_DRAW);
     wallVertexTextureCoordBuffer.itemSize = 2;
-    wallVertexTextureCoordBuffer.numItems = 36;
+    wallVertexTextureCoordBuffer.numItems = wallTextureCoords.length / 2;
     gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, wallVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
     //floor texture
@@ -651,7 +638,9 @@ function drawScene() {
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	
 	// Computing the Projection Matrix
-	pMatrix = perspective( 90, 1, 0.0001, 15 );
+	//for now
+	pMatrix = [[1.0000000000000002,0,0,0],[0,1.0000000000000002,0,0],[0,0,-1.0000133334222228,-0.00020000133334222229],[0,0,-1,0]]//perspective( 90, 1, 0.0001, 15 );
+	pMatrix.matrix = true;
 	
 	// Passing the Projection Matrix to apply the current projection
 	var pUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
@@ -661,7 +650,8 @@ function drawScene() {
 
 	if(topView){
 		mvMatrix = rotationXXMatrix(90);
-		mvMatrix = mult(mvMatrix, translationMatrix( oldTx, -3, globalTz));	
+		mvMatrix = mult(mvMatrix, translationMatrix( oldTx, -3, globalTz));
+		//drawModelFloor(-oldTx,0.25,-globalTz, mvMatrix);
 	}
 	else{
 		var tempTz = globalTz;
