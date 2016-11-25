@@ -771,6 +771,13 @@ function check_col(x,y) {
 		var minY = - (winningPos[i][2] + 0.045);
 		
 		if((x >= minX && x <= maxX) && (y >= minY && y <= maxY)){
+			document.getElementById("win").innerText = "You Won. You can start another maze, if you want.";
+			winningPos = [];
+			wallsArray = [];
+			floorArray = [];
+			globalTz = 0.0;
+			oldTx = 0.0;
+			globalTx = 0.0;
 			return true;
 		}	
 	}
@@ -786,9 +793,42 @@ function outputInfos(){
 }
 
 //----------------------------------------------------------------------------
-
+function loadMaze(tokens) {
+	document.getElementById("win").innerText = "";
+	winningPos = [];
+	wallsArray = [];
+	floorArray = [];
+	globalTz = 0.0;
+	oldTx = 0.0;
+	globalTx = 0.0;
+	tokens = tokens.split("\n");
+	for (var i = 0; i < tokens.length; i++) {
+		for (var j = 0; j < tokens[i].length; j++){
+			if(tokens[i][j] == '+'){
+				var ob = [(-0.25+(j*0.25)), 0, (0.125 + (i*-0.25))];
+				wallsArray.push(ob);
+			}
+			else if (tokens[i][j] == '-'){
+				var ob = [(-0.25+(j*0.25)), -1, (0.125 + (i*-0.25))];
+				floorArray.push(ob);	
+			}
+			else if(tokens[i][j] == 'p'){
+				var ob = [(-0.25+(j*0.25)), -1, (0.125 + (i*-0.25))];
+				oldTx = -(-0.25+(j*0.25));
+				floorArray.push(ob);
+				globalTz = -(0.125 + (i*-0.25));
+			}
+			else if(tokens[i][j] == '*'){
+				var ob = [(-0.25+(j*0.25)), -2, (0.125 + (i*-0.25))];
+				floorArray.push(ob);
+				winningPos.push(ob);
+			}
+		}
+	}			
+}
 function setEventListeners(){
 	document.getElementById("file").onchange = function(){
+		document.getElementById("win").innerText = "";
 		wallsArray = [];
 		floorArray = [];
 		winningPos = [];
@@ -828,12 +868,6 @@ function setEventListeners(){
 	}
 
 	document.getElementById("mazeSelect").onchange = function(){
-		winningPos = [];
-		wallsArray = [];
-		floorArray = [];
-		globalTz = 0.0;
-		oldTx = 0.0;
-		globalTx = 0.0;
 		var mazeSelected = document.getElementById("mazeSelect").value;
 		var tokens = "";
 		if(mazeSelected == "maze1"){
@@ -845,30 +879,7 @@ function setEventListeners(){
 		else if(mazeSelected == "arena"){
 			tokens = "++++++++++\n+--------+\n+--------+\n+--------+\n+--------+\n+--------+\n+--------+\n+--------+\n+-------*+\n++++++++++";
 		}
-		tokens = tokens.split("\n");
-		for (var i = 0; i < tokens.length; i++) {
-			for (var j = 0; j < tokens[i].length; j++){
-				if(tokens[i][j] == '+'){
-					var ob = [(-0.25+(j*0.25)), 0, (0.125 + (i*-0.25))];
-					wallsArray.push(ob);
-				}
-				else if (tokens[i][j] == '-'){
-					var ob = [(-0.25+(j*0.25)), -1, (0.125 + (i*-0.25))];
-					floorArray.push(ob);	
-				}
-				else if(tokens[i][j] == 'p'){
-					var ob = [(-0.25+(j*0.25)), -1, (0.125 + (i*-0.25))];
-					oldTx = -(-0.25+(j*0.25));
-					floorArray.push(ob);
-					globalTz = -(0.125 + (i*-0.25));
-				}
-				else if(tokens[i][j] == '*'){
-						var ob = [(-0.25+(j*0.25)), -2, (0.125 + (i*-0.25))];
-						floorArray.push(ob);
-						winningPos.push(ob);
-					}
-			}
-		}			
+		loadMaze(tokens);
 	}
 
 	document.getElementById("textureWall").onchange = function(){
