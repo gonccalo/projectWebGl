@@ -4,13 +4,16 @@
 //
 
 var gl = null; // WebGL context
-
 var shaderProgram = null;
+
+//buffers
 var triangleVertexPositionBuffer = null;
 var floorVertexBuffer = null;
 var wallVertexTextureCoordBuffer = null;
 var floorVertexTextureCoordBuffer = null;
-//var triangleVertexColorBuffer = null;
+var esfVertexPositionBuffer = null;
+var esfTextureCoordBuffer = null;
+
 // The GLOBAL transformation parameters
 
 var globalTz = 0.0;
@@ -18,141 +21,21 @@ var andar = 0.0;
 var rodar = 0.0;
 var oldTx = 0.0;
 var globalTx = 0.0;
-var labirin = [];
+var esferaRot = 0;
+
+var wallsArray = [];
+var floorArray = [];
+var winningPos = [];
 
 var topView = false;
 
 // textures
 var neheTexture;
 var floorTexture;
+var esferaTexture;
 
-/*
-// Ambient coef.
 
-var kAmbi = [ 0.23, 0.23, 0.23 ];
 
-// Difuse coef.
-
-var kDiff = [ 0.28, 0.28, 0.28 ];
-
-// Specular coef.
-
-var kSpec = [ 0.77, 0.77, 0.77 ];
-
-// Phong coef.
-
-var nPhong = 100;
-var normals = [
-
-		// FRONTAL TRIANGLE
-		 
-		 0.0,  0.0,  1.0,
-		 
-		 0.0,  0.0,  1.0,
-		 
-		 0.0,  0.0,  1.0,
-
-		 0.0,  0.0,  1.0,
-		 0.0,  0.0,  1.0,
-		 0.0,  0.0,  1.0,
-];
-
-// And their colour
-
-var colors = [
-
-		 // FRONT FACE
-		 	
-		 1.00,  0.00,  0.00,
-		 
-		 1.00,  0.00,  0.00,
-		 
-		 1.00,  0.00,  0.00,
-
-		 	
-		 1.00,  1.00,  0.00,
-		 
-		 1.00,  1.00,  0.00,
-		 
-		 1.00,  1.00,  0.00,
-		 			 
-		 // TOP FACE
-		 	
-		 0.00,  0.00,  0.00,
-		 
-		 0.00,  0.00,  0.00,
-		 
-		 0.00,  0.00,  0.00,
-
-		 	
-		 0.50,  0.50,  0.50,
-		 
-		 0.50,  0.50,  0.50,
-		 
-		 0.50,  0.50,  0.50,
-		 			 
-		 // BOTTOM FACE
-		 	
-		 0.00,  1.00,  0.00,
-		 
-		 0.00,  1.00,  0.00,
-		 
-		 0.00,  1.00,  0.00,
-
-		 	
-		 0.00,  1.00,  1.00,
-		 
-		 0.00,  1.00,  1.00,
-		 
-		 0.00,  1.00,  1.00,
-		 			 
-		 // LEFT FACE
-		 	
-		 0.00,  0.00,  1.00,
-		 
-		 0.00,  0.00,  1.00,
-		 
-		 0.00,  0.00,  1.00,
-
-		 	
-		 1.00,  0.00,  1.00,
-		 
-		 1.00,  0.00,  1.00,
-		 
-		 1.00,  0.00,  1.00,
-		 			 
-		 // RIGHT FACE
-		 	
-		 0.25,  0.50,  0.50,
-		 
-		 0.25,  0.50,  0.50,
-		 
-		 0.25,  0.50,  0.50,
-
-		 	
-		 0.50,  0.25,  0.00,
-		 
-		 0.50,  0.25,  0.00,
-		 
-		 0.50,  0.25,  0.00,
-		 			 
-		 			 
-		 // BACK FACE
-		 	
-		 0.25,  0.00,  0.75,
-		 
-		 0.25,  0.00,  0.75,
-		 
-		 0.25,  0.00,  0.75,
-
-		 	
-		 0.50,  0.35,  0.35,
-		 
-		 0.50,  0.35,  0.35,
-		 
-		 0.50,  0.35,  0.35,			 			 
-];
-*/
 //----------------------------------------------------------------------------
 //
 // The WebGL code
@@ -293,19 +176,341 @@ function initBuffers() {
 	gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, 
 			floorVertexBuffer.itemSize, 
 			gl.FLOAT, false, 0, 0);
-	
-	// Colors
-	/*
-	triangleVertexColorBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexColorBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.DYNAMIC_DRAW);
-	triangleVertexColorBuffer.itemSize = 3;
-	triangleVertexColorBuffer.numItems = colors.length / 3;			
 
-	gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, 
-			triangleVertexColorBuffer.itemSize, 
+	//end esfera
+	esfVertexPositionBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, esfVertexPositionBuffer);
+	var esfVertex = [
+		-0.577350, -0.577350, 0.577350, 
+		0.000000, 0.000000, 1.000000, 
+		-0.707107, 0.000000, 0.707107, 
+		0.577350, 0.577350, 0.577350, 
+		0.000000, 0.707107, 0.707107, 
+		0.000000, 0.000000, 1.000000, 
+		-0.577350, 0.577350, 0.577350, 
+		-0.707107, 0.000000, 0.707107, 
+		0.000000, 0.707107, 0.707107, 
+		0.000000, 0.000000, 1.000000, 
+		0.000000, 0.707107, 0.707107, 
+		-0.707107, 0.000000, 0.707107, 
+		-0.577350, -0.577350, 0.577350, 
+		0.000000, -0.707107, 0.707107, 
+		0.000000, 0.000000, 1.000000, 
+		0.577350, -0.577350, 0.577350, 
+		0.707107, 0.000000, 0.707107, 
+		0.000000, -0.707107, 0.707107, 
+		0.577350, 0.577350, 0.577350, 
+		0.000000, 0.000000, 1.000000, 
+		0.707107, 0.000000, 0.707107, 
+		0.000000, -0.707107, 0.707107, 
+		0.707107, 0.000000, 0.707107, 
+		0.000000, 0.000000, 1.000000, 
+		0.577350, -0.577350, 0.577350, 
+		0.707107, -0.707107, 0.000000, 
+		1.000000, 0.000000, 0.000000, 
+		0.577350, -0.577350, -0.577350, 
+		0.707107, 0.000000, -0.707107, 
+		0.707107, -0.707107, 0.000000, 
+		0.577350, 0.577350, -0.577350, 
+		1.000000, 0.000000, 0.000000, 
+		0.707107, 0.000000, -0.707107, 
+		0.707107, -0.707107, 0.000000, 
+		0.707107, 0.000000, -0.707107, 
+		1.000000, 0.000000, 0.000000, 
+		0.577350, -0.577350, 0.577350, 
+		1.000000, 0.000000, 0.000000, 
+		0.707107, 0.000000, 0.707107, 
+		0.577350, 0.577350, -0.577350, 
+		0.707107, 0.707107, 0.000000, 
+		1.000000, 0.000000, 0.000000, 
+		0.577350, 0.577350, 0.577350, 
+		0.707107, 0.000000, 0.707107, 
+		0.707107, 0.707107, 0.000000, 
+		1.000000, 0.000000, 0.000000, 
+		0.707107, 0.707107, 0.000000, 
+		0.707107, 0.000000, 0.707107, 
+		-0.577350, -0.577350, -0.577350, 
+		-0.707107, 0.000000, -0.707107, 
+		0.000000, 0.000000, -1.000000, 
+		-0.577350, 0.577350, -0.577350, 
+		0.000000, 0.707107, -0.707107, 
+		-0.707107, 0.000000, -0.707107, 
+		0.577350, 0.577350, -0.577350, 
+		0.000000, 0.000000, -1.000000, 
+		0.000000, 0.707107, -0.707107, 
+		-0.707107, 0.000000, -0.707107, 
+		0.000000, 0.707107, -0.707107, 
+		0.000000, 0.000000, -1.000000, 
+		-0.577350, -0.577350, -0.577350, 
+		0.000000, 0.000000, -1.000000, 
+		0.000000, -0.707107, -0.707107, 
+		0.577350, 0.577350, -0.577350, 
+		0.707107, 0.000000, -0.707107, 
+		0.000000, 0.000000, -1.000000, 
+		0.577350, -0.577350, -0.577350, 
+		0.000000, -0.707107, -0.707107, 
+		0.707107, 0.000000, -0.707107, 
+		0.000000, 0.000000, -1.000000, 
+		0.707107, 0.000000, -0.707107, 
+		0.000000, -0.707107, -0.707107, 
+		-0.577350, -0.577350, -0.577350, 
+		-0.707107, -0.707107, 0.000000, 
+		-0.707107, 0.000000, -0.707107, 
+		-0.577350, -0.577350, 0.577350, 
+		-1.000000, 0.000000, 0.000000, 
+		-0.707107, -0.707107, 0.000000, 
+		-0.577350, 0.577350, -0.577350, 
+		-0.707107, 0.000000, -0.707107, 
+		-1.000000, 0.000000, 0.000000, 
+		-0.707107, -0.707107, 0.000000, 
+		-1.000000, 0.000000, 0.000000, 
+		-0.707107, 0.000000, -0.707107, 
+		-0.577350, -0.577350, 0.577350, 
+		-0.707107, 0.000000, 0.707107, 
+		-1.000000, 0.000000, 0.000000, 
+		-0.577350, 0.577350, 0.577350, 
+		-0.707107, 0.707107, 0.000000, 
+		-0.707107, 0.000000, 0.707107, 
+		-0.577350, 0.577350, -0.577350, 
+		-1.000000, 0.000000, 0.000000, 
+		-0.707107, 0.707107, 0.000000, 
+		-0.707107, 0.000000, 0.707107, 
+		-0.707107, 0.707107, 0.000000, 
+		-1.000000, 0.000000, 0.000000, 
+		-0.577350, 0.577350, -0.577350, 
+		-0.707107, 0.707107, 0.000000, 
+		0.000000, 0.707107, -0.707107, 
+		-0.577350, 0.577350, 0.577350, 
+		0.000000, 1.000000, 0.000000, 
+		-0.707107, 0.707107, 0.000000, 
+		0.577350, 0.577350, -0.577350, 
+		0.000000, 0.707107, -0.707107, 
+		0.000000, 1.000000, 0.000000, 
+		-0.707107, 0.707107, 0.000000, 
+		0.000000, 1.000000, 0.000000, 
+		0.000000, 0.707107, -0.707107, 
+		-0.577350, 0.577350, 0.577350, 
+		0.000000, 0.707107, 0.707107, 
+		0.000000, 1.000000, 0.000000, 
+		0.577350, 0.577350, 0.577350, 
+		0.707107, 0.707107, 0.000000, 
+		0.000000, 0.707107, 0.707107, 
+		0.577350, 0.577350, -0.577350, 
+		0.000000, 1.000000, 0.000000, 
+		0.707107, 0.707107, 0.000000, 
+		0.000000, 0.707107, 0.707107, 
+		0.707107, 0.707107, 0.000000, 
+		0.000000, 1.000000, 0.000000, 
+		-0.577350, -0.577350, 0.577350, 
+		-0.707107, -0.707107, 0.000000, 
+		0.000000, -1.000000, 0.000000, 
+		-0.577350, -0.577350, -0.577350, 
+		0.000000, -0.707107, -0.707107, 
+		-0.707107, -0.707107, 0.000000, 
+		0.577350, -0.577350, -0.577350, 
+		0.000000, -1.000000, 0.000000, 
+		0.000000, -0.707107, -0.707107, 
+		-0.707107, -0.707107, 0.000000, 
+		0.000000, -0.707107, -0.707107, 
+		0.000000, -1.000000, 0.000000, 
+		-0.577350, -0.577350, 0.577350, 
+		0.000000, -1.000000, 0.000000, 
+		0.000000, -0.707107, 0.707107, 
+		0.577350, -0.577350, -0.577350, 
+		0.707107, -0.707107, 0.000000, 
+		0.000000, -1.000000, 0.000000, 
+		0.577350, -0.577350, 0.577350, 
+		0.000000, -0.707107, 0.707107, 
+		0.707107, -0.707107, 0.000000, 
+		0.000000, -1.000000, 0.000000, 
+		0.707107, -0.707107, 0.000000, 
+		0.000000, -0.707107, 0.707107,
+	];
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(esfVertex), gl.DYNAMIC_DRAW);
+	esfVertexPositionBuffer.itemSize = 3;
+	esfVertexPositionBuffer.numItems = esfVertex.length / 3;
+	
+	gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, 
+			esfVertexPositionBuffer.itemSize, 
 			gl.FLOAT, false, 0, 0);
-	*/
+
+	// esfera texture
+	esfTextureCoordBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, esfTextureCoordBuffer);
+    var esfTextureCoords = [
+      0.0, 1.0,
+      0.0, 0.0,
+      1.0, 0.0,
+
+      1.0, 0.0,
+      1.0, 1.0,
+      0.0, 1.0,
+	  0.0, 1.0,
+      0.0, 0.0,
+      1.0, 0.0,
+
+      1.0, 0.0,
+      1.0, 1.0,
+      0.0, 1.0,
+	  0.0, 1.0,
+      0.0, 0.0,
+      1.0, 0.0,
+
+      1.0, 0.0,
+      1.0, 1.0,
+      0.0, 1.0,
+		0.0, 1.0,
+      0.0, 0.0,
+      1.0, 0.0,
+
+      1.0, 0.0,
+      1.0, 1.0,
+      0.0, 1.0, 
+		0.0, 1.0,
+      0.0, 0.0,
+      1.0, 0.0,
+
+      1.0, 0.0,
+      1.0, 1.0,
+      0.0, 1.0,
+		0.0, 1.0,
+      0.0, 0.0,
+      1.0, 0.0,
+
+      1.0, 0.0,
+      1.0, 1.0,
+      0.0, 1.0,
+		0.0, 1.0,
+      0.0, 0.0,
+      1.0, 0.0,
+
+      1.0, 0.0,
+      1.0, 1.0,
+      0.0, 1.0,
+		0.0, 1.0,
+      0.0, 0.0,
+      1.0, 0.0,
+
+      1.0, 0.0,
+      1.0, 1.0,
+      0.0, 1.0, 
+		0.0, 1.0,
+      0.0, 0.0,
+      1.0, 0.0,
+
+      1.0, 0.0,
+      1.0, 1.0,
+      0.0, 1.0, 
+		0.0, 1.0,
+      0.0, 0.0,
+      1.0, 0.0,
+
+      1.0, 0.0,
+      1.0, 1.0,
+      0.0, 1.0, 
+		0.0, 1.0,
+      0.0, 0.0,
+      1.0, 0.0,
+
+      1.0, 0.0,
+      1.0, 1.0,
+      0.0, 1.0,
+		0.0, 1.0,
+      0.0, 0.0,
+      1.0, 0.0,
+
+      1.0, 0.0,
+      1.0, 1.0,
+      0.0, 1.0,
+		0.0, 1.0,
+      0.0, 0.0,
+      1.0, 0.0,
+
+      1.0, 0.0,
+      1.0, 1.0,
+      0.0, 1.0,
+		0.0, 1.0,
+      0.0, 0.0,
+      1.0, 0.0,
+
+      1.0, 0.0,
+      1.0, 1.0,
+      0.0, 1.0,
+		0.0, 1.0,
+      0.0, 0.0,
+      1.0, 0.0,
+
+      1.0, 0.0,
+      1.0, 1.0,
+      0.0, 1.0, 
+		0.0, 1.0,
+      0.0, 0.0,
+      1.0, 0.0,
+
+      1.0, 0.0,
+      1.0, 1.0,
+      0.0, 1.0, 
+		0.0, 1.0,
+      0.0, 0.0,
+      1.0, 0.0,
+
+      1.0, 0.0,
+      1.0, 1.0,
+      0.0, 1.0, 
+		0.0, 1.0,
+      0.0, 0.0,
+      1.0, 0.0,
+
+      1.0, 0.0,
+      1.0, 1.0,
+      0.0, 1.0, 
+		0.0, 1.0,
+      0.0, 0.0,
+      1.0, 0.0,
+
+      1.0, 0.0,
+      1.0, 1.0,
+      0.0, 1.0,
+		0.0, 1.0,
+      0.0, 0.0,
+      1.0, 0.0,
+
+      1.0, 0.0,
+      1.0, 1.0,
+      0.0, 1.0,
+		0.0, 1.0,
+      0.0, 0.0,
+      1.0, 0.0,
+
+      1.0, 0.0,
+      1.0, 1.0,
+      0.0, 1.0, 
+		0.0, 1.0,
+      0.0, 0.0,
+      1.0, 0.0,
+
+      1.0, 0.0,
+      1.0, 1.0,
+      0.0, 1.0,
+		0.0, 1.0,
+      0.0, 0.0,
+      1.0, 0.0,
+
+      1.0, 0.0,
+      1.0, 1.0,
+      0.0, 1.0, 
+	  0.0, 1.0,
+      0.0, 0.0,
+      1.0, 0.0,
+
+      1.0, 0.0,
+      1.0, 1.0,
+      0.0, 1.0,
+    ];
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(esfTextureCoords), gl.STATIC_DRAW);
+    esfTextureCoordBuffer.itemSize = 2;
+    esfTextureCoordBuffer.numItems = esfTextureCoords / 2;
+    gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, esfTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
 	
 	// wall texture
 	wallVertexTextureCoordBuffer = gl.createBuffer();
@@ -393,193 +598,6 @@ function initBuffers() {
 
 //----------------------------------------------------------------------------
 
-//  Computing the illumination and rendering the model
-
-function computeIllumination( mvMatrix ) {
-
-	// Phong Illumination Model
-	colors.fill(0);
-    // SMOOTH-SHADING 
-
-    // Compute the illumination for every vertex
-
-    // Iterate through the vertices
-    
-    for( var vertIndex = 0; vertIndex < vertices.length; vertIndex += 3 )
-    {	
-
-		// For every vertex
-		
-		// GET COORDINATES AND NORMAL VECTOR
-		
-		var auxP = vertices.slice( vertIndex, vertIndex + 3 );
-		
-		var auxN = normals.slice( vertIndex, vertIndex + 3 );
-
-        // CONVERT TO HOMOGENEOUS COORDINATES
-
-		auxP.push( 1.0 );
-		
-		auxN.push( 0.0 );
-		
-        // APPLY CURRENT TRANSFORMATION
-
-        var pointP = multiplyPointByMatrix( mvMatrix, auxP );
-
-        var vectorN = multiplyVectorByMatrix( mvMatrix, auxN );
-        
-        normalize( vectorN );
-
-		// VIEWER POSITION
-		var vectorV = symmetric( pointP );
-		
-        normalize( vectorV );
-
-	    // Compute the 3 components: AMBIENT, DIFFUSE and SPECULAR
-	    
-	    // FOR EACH LIGHT SOURCE
-	    for(var l = 0; l < lightSources.length; l++ )
-	    {
-			if( lightSources[l].isOff() ) {
-				
-				continue;
-			}
-			
-	        // INITIALIZE EACH COMPONENT, with the constant terms
-	
-		    var ambientTerm = [0,0,0];//vec3();
-		
-		    var diffuseTerm = [0,0,0];//vec3();
-		
-		    var specularTerm = [0,0,0];//vec3();
-		
-		    // For the current light source
-		
-		    ambient_Illumination = lightSources[l].getAmbIntensity();
-		
-		    int_Light_Source = lightSources[l].getIntensity();
-		
-		    pos_Light_Source = lightSources[l].getPosition();
-		    
-		    // Animating the light source, if defined
-		    
-		    var lightSourceMatrix = [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]];// mat4();
-		    lightSourceMatrix.matrix = true;
-		    // COMPLETE THE CODE FOR THE OTHER ROTATION AXES
-		    
-		    if( lightSources[l].isRotYYOn() ) 
-		    {
-				lightSourceMatrix = mult( 
-						lightSourceMatrix, 
-						rotationYYMatrix( lightSources[l].getRotAngleYY() ) );
-			}
-			
-	        for( var i = 0; i < 3; i++ )
-	        {
-			    // AMBIENT ILLUMINATION --- Constant for every vertex
-	   
-			    ambientTerm[i] = ambient_Illumination[i] * kAmbi[i];
-	
-	            diffuseTerm[i] = int_Light_Source[i] * kDiff[i];
-	
-	            specularTerm[i] = int_Light_Source[i] * kSpec[i];
-	        }
-	    
-	        // DIFFUSE ILLUMINATION
-	        
-	        var vectorL = [0,0,0,1];//vec4();
-	
-	        if( pos_Light_Source[3] == 0.0 )
-	        {
-	            // DIRECTIONAL Light Source
-	            
-	            vectorL = multiplyVectorByMatrix( 
-							lightSourceMatrix,
-							pos_Light_Source );
-	        }
-	        else
-	        {
-	            // POINT Light Source
-	
-	            // TO DO : apply the global transformation to the light source?
-	
-	            vectorL = multiplyPointByMatrix( 
-							lightSourceMatrix,
-							pos_Light_Source );
-				
-				for( var i = 0; i < 3; i++ )
-	            {
-	                vectorL[ i ] -= pointP[ i ];
-	            }
-	        }
-			lightSourceMatrix = null;
-			// Back to Euclidean coordinates
-			
-			vectorL = vectorL.slice(0,3);
-			
-	        normalize( vectorL );
-	
-	        var cosNL = dotProduct( vectorN, vectorL );
-	
-	        if( cosNL < 0.0 )
-	        {
-				// No direct illumination !!
-				
-				cosNL = 0.0;
-	        }
-	
-	        // SEPCULAR ILLUMINATION 
-	
-	        var vectorH = add( vectorL, vectorV );
-			
-	        normalize( vectorH );
-	
-	        var cosNH = dotProduct( vectorN, vectorH );
-	
-			// No direct illumination or viewer not in the right direction
-			
-	        if( (cosNH < 0.0) || (cosNL <= 0.0) )
-	        {
-	            cosNH = 0.0;
-	        }
-	
-	        // Compute the color values and store in the colors array
-	        
-	        var tempR = ambientTerm[0] + diffuseTerm[0] * cosNL + specularTerm[0] * Math.pow(cosNH, nPhong);
-	        
-	        var tempG = ambientTerm[1] + diffuseTerm[1] * cosNL + specularTerm[1] * Math.pow(cosNH, nPhong);
-	        
-	        var tempB = ambientTerm[2] + diffuseTerm[2] * cosNL + specularTerm[2] * Math.pow(cosNH, nPhong);
-	        
-			colors[vertIndex] += tempR;
-	        
-	        // Avoid exceeding 1.0
-	        
-			if( colors[vertIndex] > 1.0 ) {
-				
-				colors[vertIndex] = 1.0;
-			}
-	        
-	        // Avoid exceeding 1.0
-	        
-			colors[vertIndex + 1] += tempG;
-			
-			if( colors[vertIndex + 1] > 1.0 ) {
-				
-				colors[vertIndex + 1] = 1.0;
-			}
-			
-			colors[vertIndex + 2] += tempB;
-	        
-	        // Avoid exceeding 1.0
-	        
-			if( colors[vertIndex + 2] > 1.0 ) {
-				
-				colors[vertIndex + 2] = 1.0;
-			}
-	    }	
-	}
-}
 
 function drawModelWall(	tx, ty, tz, mvMatrix) {					 
 
@@ -592,7 +610,6 @@ function drawModelWall(	tx, ty, tz, mvMatrix) {
 	gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
 	mvUniform = null;
 	
-	//computeIllumination( mvMatrix );
 	gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexPositionBuffer);
 	gl.vertexAttribPointer( shaderProgram.vertexPositionAttribute, 
 							triangleVertexPositionBuffer.itemSize, 
@@ -621,6 +638,27 @@ function drawModelFloor(tx, ty, tz, mvMatrix) {
 	gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, floorVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
     gl.bindTexture(gl.TEXTURE_2D, floorTexture);
 	gl.drawArrays(gl.TRIANGLES, 0, floorVertexBuffer.numItems);
+}
+function drawModelWin(tx, ty, tz, mvMatrix) {				 
+	mvMatrix = mult( mvMatrix, translationMatrix( tx , ty, tz ));
+	mvMatrix = mult( mvMatrix, rotationYYMatrix( esferaRot ) );
+	mvMatrix = mult( mvMatrix, scalingMatrix( 0.05, 0.05, 0.05 ) );
+						 
+	// Passing the Model View Matrix to apply the current transformation
+	
+	var mvUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
+	gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
+	mvUniform = null;
+	
+	//computeIllumination( mvMatrix );
+	gl.bindBuffer(gl.ARRAY_BUFFER, esfVertexPositionBuffer);
+	gl.vertexAttribPointer( shaderProgram.vertexPositionAttribute, 
+							esfVertexPositionBuffer.itemSize, 
+							gl.FLOAT, false, 0, 0);
+	gl.bindBuffer(gl.ARRAY_BUFFER, esfTextureCoordBuffer);
+	gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, esfTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+    gl.bindTexture(gl.TEXTURE_2D, esferaTexture);
+	gl.drawArrays(gl.TRIANGLES, 0, esfVertexPositionBuffer.numItems);
 }
 
 
@@ -668,15 +706,17 @@ function drawScene() {
 		mvMatrix = mult(mvMatrix, translationMatrix( oldTx, 0, globalTz));
 	}
 	
-	for(var i = 0; i < labirin.length; i++){
-		if(labirin[i][1] != -1){
-			drawModelWall( labirin[i][0], 0, labirin[i][2],
+	for (var i = 0; i < wallsArray.length; i++) {
+		drawModelWall( wallsArray[i][0], 0, wallsArray[i][2],
 	                   mvMatrix);
-		}
-		else{
-			drawModelFloor( labirin[i][0], 0, labirin[i][2],
+	}
+	for (var i = 0; i < floorArray.length; i++) {
+		drawModelFloor(floorArray[i][0], 0, floorArray[i][2],
 					   mvMatrix);
-		}
+	}
+	for (var i = 0; i < winningPos.length; i++) {
+		drawModelWin(winningPos[i][0], 0, winningPos[i][2],
+					   mvMatrix);
 	}
 	mvMatrix = null;
 }
@@ -690,32 +730,8 @@ function animate() {
 	var timeNow = new Date().getTime();
 	
 	if( lastTime != 0 ) {
-		
 		var elapsed = timeNow - lastTime;
-
-		// Rotating the light sources
-		for(var li = 0; li < lightSources.length; li++){
-			if (lightSources[li].isRotYYOn()) {
-				var angle = lightSources[li].getRotAngleYY() + (90 * elapsed) / 1000.0;
-		
-				lightSources[li].setRotAngleYY( angle );				
-			}
-		}
-	/*
-		if( lightSources[0].isRotYYOn() ) {
-
-			var angle = lightSources[0].getRotAngleYY() + (90 * elapsed) / 1000.0;
-		
-			lightSources[0].setRotAngleYY( angle );
-		}
-	
-		if( lightSources[1].isRotYYOn() ) {
-
-			var angle = lightSources[1].getRotAngleYY() - 0.5 * (90 * elapsed) / 1000.0;
-		
-			lightSources[1].setRotAngleYY( angle );
-		}
-		*/
+		esferaRot += 1 * (90 * elapsed) / 1000.0;
 	}
 	
 	lastTime = timeNow;
@@ -732,23 +748,31 @@ function tick() {
 	
 	drawScene();
 	
-	//animate();
+	animate();
 }
 
 function check_col(x,y) {
-	for (var i = 0; i < labirin.length; i++) {
-		if(labirin[i][1] == -1){
-			continue;
-		}
-		var maxX = - (labirin[i][0] - 0.125);
-		var minX = - (labirin[i][0] + 0.125);
+	for (var i = 0; i < wallsArray.length; i++) {
+		var maxX = - (wallsArray[i][0] - 0.125);
+		var minX = - (wallsArray[i][0] + 0.125);
 
-		var maxY = - (labirin[i][2] - 0.125);
-		var minY = - (labirin[i][2] + 0.125);
+		var maxY = - (wallsArray[i][2] - 0.125);
+		var minY = - (wallsArray[i][2] + 0.125);
 
 		if((x >= minX && x <= maxX) && (y >= minY && y <= maxY)){
 			return true;
 		}
+	}
+	for (var i = 0; i < winningPos.length; i++) {
+		var maxX = - (winningPos[i][0] - 0.045);
+		var minX = - (winningPos[i][0] + 0.045);
+
+		var maxY = - (winningPos[i][2] - 0.045);
+		var minY = - (winningPos[i][2] + 0.045);
+		
+		if((x >= minX && x <= maxX) && (y >= minY && y <= maxY)){
+			return true;
+		}	
 	}
 	return false;
 }
@@ -765,7 +789,9 @@ function outputInfos(){
 
 function setEventListeners(){
 	document.getElementById("file").onchange = function(){
-		labirin = [];
+		wallsArray = [];
+		floorArray = [];
+		winningPos = [];
 		globalTz = 0.0;
 		oldTx = 0.0;
 		globalTx = 0.0;
@@ -777,19 +803,22 @@ function setEventListeners(){
 				for (var j = 0; j < tokens[i].length; j++){
 					if(tokens[i][j] == '+'){
 						var ob = [(-0.25+(j*0.25)), 0, (0.125 + (i*-0.25))];
-						//var ob = [(-0.75+(j*0.5)), 0, (0.75 + (i*-0.5))];
-						labirin.push(ob);
+						wallsArray.push(ob);
 					}
 					else if (tokens[i][j] == '-'){
 						var ob = [(-0.25+(j*0.25)), -1, (0.125 + (i*-0.25))];
-						//var ob = [(-0.75+(j*0.5)), 0, (0.75 + (i*-0.5))];
-						labirin.push(ob);	
+						floorArray.push(ob);
 					}
 					else if(tokens[i][j] == 'p'){
 						var ob = [(-0.25+(j*0.25)), -1, (0.125 + (i*-0.25))];
+						floorArray.push(ob);
 						oldTx = -(-0.25+(j*0.25));
-						labirin.push(ob);
 						globalTz = -(0.125 + (i*-0.25));
+					}
+					else if(tokens[i][j] == '*'){
+						var ob = [(-0.25+(j*0.25)), -2, (0.125 + (i*-0.25))];
+						floorArray.push(ob);
+						winningPos.push(ob);
 					}
 				}
 			}			
@@ -799,38 +828,45 @@ function setEventListeners(){
 	}
 
 	document.getElementById("mazeSelect").onchange = function(){
-		labirin = [];
+		winningPos = [];
+		wallsArray = [];
+		floorArray = [];
 		globalTz = 0.0;
 		oldTx = 0.0;
 		globalTx = 0.0;
 		var mazeSelected = document.getElementById("mazeSelect").value;
 		var tokens = "";
 		if(mazeSelected == "maze1"){
-			tokens = "++++++++++\n+-----++-+\n+-+++----+\n+---++++++\n+++p--++-+\n/+--++-+-+\n++-+++---+\n+----+++++\n+-++-----+\n++++++++++";
+			tokens = "++++++++++\n+-----++-+\n+-+++----+\n+---++++++\n+++p--++-+\n/+--++-+-+\n++-+++---+\n+----+++++\n+-++----*+\n++++++++++";
 		}
 		else if(mazeSelected == "maze2"){
-			tokens = "+++//////+++++++++++\n+-++++++++----------\n+--------+-+++++++++\n++++++++-+---------+\n///////+-+++++++++-+\n///////+-+---------+\n///////+-+-+++++++++\n///////+-+---------+\n///////+-+++++++++-+\n///////+-----------+\n///////+++++++++++++";
+			tokens = "+++//////+++++++++++\n+-++++++++---------*\n+--------+-+++++++++\n++++++++-+---------+\n///////+-+++++++++-+\n///////+-+---------+\n///////+-+-+++++++++\n///////+-+---------+\n///////+-+++++++++-+\n///////+-----------+\n///////+++++++++++++";
 		}
 		else if(mazeSelected == "arena"){
-			tokens = "++++++++++\n+--------+\n+--------+\n+--------+\n+--------+\n+--------+\n+--------+\n+--------+\n+--------+\n++++++++++";
+			tokens = "++++++++++\n+--------+\n+--------+\n+--------+\n+--------+\n+--------+\n+--------+\n+--------+\n+-------*+\n++++++++++";
 		}
 		tokens = tokens.split("\n");
 		for (var i = 0; i < tokens.length; i++) {
 			for (var j = 0; j < tokens[i].length; j++){
 				if(tokens[i][j] == '+'){
 					var ob = [(-0.25+(j*0.25)), 0, (0.125 + (i*-0.25))];
-					labirin.push(ob);
+					wallsArray.push(ob);
 				}
 				else if (tokens[i][j] == '-'){
 					var ob = [(-0.25+(j*0.25)), -1, (0.125 + (i*-0.25))];
-					labirin.push(ob);	
+					floorArray.push(ob);	
 				}
 				else if(tokens[i][j] == 'p'){
 					var ob = [(-0.25+(j*0.25)), -1, (0.125 + (i*-0.25))];
 					oldTx = -(-0.25+(j*0.25));
-					labirin.push(ob);
+					floorArray.push(ob);
 					globalTz = -(0.125 + (i*-0.25));
 				}
+				else if(tokens[i][j] == '*'){
+						var ob = [(-0.25+(j*0.25)), -2, (0.125 + (i*-0.25))];
+						floorArray.push(ob);
+						winningPos.push(ob);
+					}
 			}
 		}			
 	}
@@ -904,7 +940,22 @@ function setEventListeners(){
         		topView = false;
     		}
     	e.preventDefault();
-	};                
+	};
+
+	document.getElementById("esferaTexture").onchange = function(){
+		var file = this.files[0];
+		var reader = new FileReader();
+		
+		reader.onload = function( progressEvent ){
+			esferaTexture = gl.createTexture();
+    		esferaTexture.image = new Image();
+    		esferaTexture.image.onload = function() {
+      			handleLoadedTexture(esferaTexture);
+    		};
+    		esferaTexture.image.src = this.result;
+		};
+		reader.readAsDataURL( file );		
+	}
 }
 
 function handleLoadedTexture(texture) {
@@ -959,6 +1010,13 @@ function initTextures() {
       	handleLoadedTexture(floorTexture);
     };
     floorTexture.image.src = "floor.bmp";
+
+    esferaTexture = gl.createTexture();
+    esferaTexture.image = new Image();
+    esferaTexture.image.onload = function() {
+    	handleLoadedTexture(esferaTexture);
+    };
+    esferaTexture.image.src = "gold.bmp";
 }
 function runWebGL() {
 	
