@@ -14,6 +14,8 @@ var floorVertexTextureCoordBuffer = null;
 var esfVertexPositionBuffer = null;
 var esfTextureCoordBuffer = null;
 
+var topVertexPositionBuffer = null;
+
 // The GLOBAL transformation parameters
 
 var globalTz = 0.0;
@@ -33,6 +35,7 @@ var topView = false;
 var neheTexture;
 var floorTexture;
 var esferaTexture;
+var topTexture;
 
 
 
@@ -168,13 +171,37 @@ function initBuffers() {
 		              -0.25,  -0.25, -0.25,
 		 
 			          -0.25,  -0.25,  0.25,
-					]
+					];
 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(floor), gl.DYNAMIC_DRAW);
 	floorVertexBuffer.itemSize = 3;
 	floorVertexBuffer.numItems = floor.length / 3;
 	
 	gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, 
 			floorVertexBuffer.itemSize, 
+			gl.FLOAT, false, 0, 0);
+
+	//top
+	topVertexPositionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, topVertexPositionBuffer);
+    var topVertexPos = [
+        -0.25,  0.25,  0.25,
+		 
+		 0.25,  0.25,  0.25,
+		 
+		 0.25,  0.25, -0.25,
+
+		 0.25,  0.25, -0.25,
+		 
+		-0.25,  0.25, -0.25,
+		 
+		-0.25,  0.25,  0.25,
+    ];
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(topVertexPos), gl.DYNAMIC_DRAW);
+    topVertexPositionBuffer.itemSize = 3;
+    topVertexPositionBuffer.numItems = topVertexPos.length/3;
+
+    gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, 
+			topVertexPositionBuffer.itemSize, 
 			gl.FLOAT, false, 0, 0);
 
 	//end esfera
@@ -599,68 +626,82 @@ function initBuffers() {
 //----------------------------------------------------------------------------
 
 
-function drawModelWall(	tx, ty, tz, mvMatrix) {					 
-
-	mvMatrix = mult( mvMatrix, translationMatrix( tx, ty, tz ));
-	mvMatrix = mult( mvMatrix, scalingMatrix( 0.5, 0.5, 0.5 ) );
-						 
-	// Passing the Model View Matrix to apply the current transformation
-	
-	var mvUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
-	gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
-	mvUniform = null;
-	
+function drawModelWall(mvMatrix, mvUniform) {
+	gl.bindTexture(gl.TEXTURE_2D, neheTexture);
 	gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexPositionBuffer);
 	gl.vertexAttribPointer( shaderProgram.vertexPositionAttribute, 
 							triangleVertexPositionBuffer.itemSize, 
 							gl.FLOAT, false, 0, 0);
 	gl.bindBuffer(gl.ARRAY_BUFFER, wallVertexTextureCoordBuffer);
 	gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, wallVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
-    gl.bindTexture(gl.TEXTURE_2D, neheTexture);
-    gl.drawArrays(gl.TRIANGLES, 0, triangleVertexPositionBuffer.numItems);
-}
-function drawModelFloor(tx, ty, tz, mvMatrix) {					 
-	mvMatrix = mult( mvMatrix, translationMatrix( tx, ty, tz ));
-	mvMatrix = mult( mvMatrix, scalingMatrix( 0.5, 0.5, 0.5 ) );
+    
+	for (var i = 0; i < wallsArray.length; i++) {
+		var tempMvMat = mult( mvMatrix, translationMatrix(wallsArray[i][0], 0, wallsArray[i][2]));
+		tempMvMat = mult( tempMvMat, scalingMatrix( 0.5, 0.5, 0.5 ) );
 						 
-	// Passing the Model View Matrix to apply the current transformation
-	
-	var mvUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
-	gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
-	mvUniform = null;
-	
-	//computeIllumination( mvMatrix );
+		// Passing the Model View Matrix to apply the current transformation
+		gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(tempMvMat)));
+		gl.drawArrays(gl.TRIANGLES, 0, triangleVertexPositionBuffer.numItems);
+	}				 
+}
+
+function drawModelFloor(mvMatrix, mvUniform) {
+	gl.bindTexture(gl.TEXTURE_2D, floorTexture);
 	gl.bindBuffer(gl.ARRAY_BUFFER, floorVertexBuffer);
 	gl.vertexAttribPointer( shaderProgram.vertexPositionAttribute, 
 							floorVertexBuffer.itemSize, 
 							gl.FLOAT, false, 0, 0);
 	gl.bindBuffer(gl.ARRAY_BUFFER, floorVertexTextureCoordBuffer);
 	gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, floorVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
-    gl.bindTexture(gl.TEXTURE_2D, floorTexture);
-	gl.drawArrays(gl.TRIANGLES, 0, floorVertexBuffer.numItems);
-}
-function drawModelWin(tx, ty, tz, mvMatrix) {				 
-	mvMatrix = mult( mvMatrix, translationMatrix( tx , ty, tz ));
-	mvMatrix = mult( mvMatrix, rotationYYMatrix( esferaRot ) );
-	mvMatrix = mult( mvMatrix, scalingMatrix( 0.05, 0.05, 0.05 ) );
+	
+	for (var i = 0; i < floorArray.length; i++) {
+		var tempMvMat = mult( mvMatrix, translationMatrix(floorArray[i][0], 0, floorArray[i][2]));
+		tempMvMat = mult( tempMvMat, scalingMatrix( 0.5, 0.5, 0.5 ) );
 						 
-	// Passing the Model View Matrix to apply the current transformation
-	
-	var mvUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
-	gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
-	mvUniform = null;
-	
-	//computeIllumination( mvMatrix );
+		// Passing the Model View Matrix to apply the current transformation
+		gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(tempMvMat)));
+		gl.drawArrays(gl.TRIANGLES, 0, floorVertexBuffer.numItems);
+	}					 
+}
+
+function drawModelWin(mvMatrix, mvUniform) {
+	gl.bindTexture(gl.TEXTURE_2D, esferaTexture);
 	gl.bindBuffer(gl.ARRAY_BUFFER, esfVertexPositionBuffer);
 	gl.vertexAttribPointer( shaderProgram.vertexPositionAttribute, 
 							esfVertexPositionBuffer.itemSize, 
 							gl.FLOAT, false, 0, 0);
 	gl.bindBuffer(gl.ARRAY_BUFFER, esfTextureCoordBuffer);
 	gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, esfTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
-    gl.bindTexture(gl.TEXTURE_2D, esferaTexture);
-	gl.drawArrays(gl.TRIANGLES, 0, esfVertexPositionBuffer.numItems);
+
+	for (var i = 0; i < winningPos.length; i++) {
+		var tempMvMat = mult( mvMatrix, translationMatrix(winningPos[i][0], 0, winningPos[i][2]));
+		tempMvMat = mult( tempMvMat, rotationYYMatrix( esferaRot ) );
+		tempMvMat = mult( tempMvMat, scalingMatrix( 0.05, 0.05, 0.05 ) );
+						 
+		// Passing the Model View Matrix to apply the current transformation
+		gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(tempMvMat)));
+		gl.drawArrays(gl.TRIANGLES, 0, esfVertexPositionBuffer.numItems);
+	}				 
 }
 
+function drawModelTop(mvMatrix, mvUniform) {
+	gl.bindTexture(gl.TEXTURE_2D, topTexture);
+	gl.bindBuffer(gl.ARRAY_BUFFER, topVertexPositionBuffer);
+	gl.vertexAttribPointer( shaderProgram.vertexPositionAttribute, 
+							topVertexPositionBuffer.itemSize, 
+							gl.FLOAT, false, 0, 0);
+	gl.bindBuffer(gl.ARRAY_BUFFER, floorVertexTextureCoordBuffer);
+	gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, floorVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+	
+	for (var i = 0; i < floorArray.length; i++) {
+		var tempMvMat = mult( mvMatrix, translationMatrix(floorArray[i][0], 0, floorArray[i][2]));
+		tempMvMat = mult( tempMvMat, scalingMatrix( 0.5, 0.5, 0.5 ) );
+						 
+		// Passing the Model View Matrix to apply the current transformation
+		gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(tempMvMat)));
+		gl.drawArrays(gl.TRIANGLES, 0, topVertexPositionBuffer.numItems);
+	}
+}
 
 //----------------------------------------------------------------------------
 
@@ -671,6 +712,7 @@ function drawScene() {
 	var pMatrix;
 	var mvMatrix = [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]];//mat4();
 	mvMatrix.matrix = true;
+	var tempMV = gl.getUniformLocation(shaderProgram, "uMVMatrix");
 	
 	// Clearing the frame-buffer and the depth-buffer
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -704,20 +746,15 @@ function drawScene() {
 			oldTx = tempTx;
 		}
 		mvMatrix = mult(mvMatrix, translationMatrix( oldTx, 0, globalTz));
+		//draw top
+		drawModelTop(mvMatrix, tempMV);
 	}
-	
-	for (var i = 0; i < wallsArray.length; i++) {
-		drawModelWall( wallsArray[i][0], 0, wallsArray[i][2],
-	                   mvMatrix);
-	}
-	for (var i = 0; i < floorArray.length; i++) {
-		drawModelFloor(floorArray[i][0], 0, floorArray[i][2],
-					   mvMatrix);
-	}
-	for (var i = 0; i < winningPos.length; i++) {
-		drawModelWin(winningPos[i][0], 0, winningPos[i][2],
-					   mvMatrix);
-	}
+	//draw walls
+	drawModelWall(mvMatrix, tempMV);
+	//draw floor
+	drawModelFloor(mvMatrix, tempMV);
+	//draw esfera
+	drawModelWin(mvMatrix, tempMV);
 	mvMatrix = null;
 }
 
@@ -967,6 +1004,21 @@ function setEventListeners(){
 		};
 		reader.readAsDataURL( file );		
 	}
+
+	document.getElementById("textureTop").onchange = function(){
+		var file = this.files[0];
+		var reader = new FileReader();
+		
+		reader.onload = function( progressEvent ){
+			topTexture = gl.createTexture();
+    		topTexture.image = new Image();
+    		topTexture.image.onload = function() {
+      			handleLoadedTexture(topTexture);
+    		};
+    		topTexture.image.src = this.result;
+		};
+		reader.readAsDataURL( file );		
+	}
 }
 
 function handleLoadedTexture(texture) {
@@ -992,8 +1044,8 @@ function initWebGL( canvas ) {
 		// DEFAULT: The viewport background color is WHITE
 
 		// Enable FACE CULLING
-		gl.enable( gl.CULL_FACE );
-		gl.cullFace( gl.BACK );
+		//gl.enable( gl.CULL_FACE );
+		//gl.cullFace( gl.BACK );
 
 		// Enable DEPTH-TEST
 		gl.enable( gl.DEPTH_TEST );        
@@ -1028,6 +1080,13 @@ function initTextures() {
     	handleLoadedTexture(esferaTexture);
     };
     esferaTexture.image.src = "gold.bmp";
+
+    topTexture = gl.createTexture();
+    topTexture.image = new Image();
+    topTexture.image.onload = function() {
+    	handleLoadedTexture(topTexture);
+    };
+    topTexture.image.src = "top.bmp";
 }
 function runWebGL() {
 	
