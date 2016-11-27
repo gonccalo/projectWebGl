@@ -1012,8 +1012,45 @@ function setEventListeners(){
 		};
 		reader.readAsDataURL( file );		
 	}
+
+	var el = document.getElementById("my-canvas");
+  	el.addEventListener("touchstart", handleStart, false);
+  	el.addEventListener("touchend", handleEnd, false);
+  	el.addEventListener("touchmove", handleStart, false);
 }
 
+function handleStart(event){
+	event.preventDefault();
+	var touches = event.changedTouches;
+        
+  	for (var i = 0; i < touches.length; i++) {
+  		if(touches[i].screenX > screen.width/2 + 100){
+  			rodar = 1.5;
+  		}
+  		else if (touches[i].screenX < screen.width/2 - 100){
+  			rodar = -1.5;
+  		}
+  		else{
+  			rodar = 0;
+  		}
+  		if (touches[i].screenY > (screen.height/2)+100) {
+  			andar = -0.01;
+  		}
+  		else if (touches[i].screenY < (screen.height/2)-100){
+  			andar = 0.01;
+  		}
+  		else{
+  			andar = 0;
+  		}
+  	}
+}
+function handleEnd(event) {
+	event.preventDefault();
+	//var touches = event.changedTouches;
+        
+  	rodar = 0;
+  	andar = 0;
+}
 function handleLoadedTexture(texture) {
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
