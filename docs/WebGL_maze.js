@@ -49,7 +49,7 @@ var topTexture;
 //  Rendering
 //
 
-// Handling the Vertex and the Color Buffers
+// Handling the Vertex and the Texture Buffers
 
 function initBuffers() {	
 	
@@ -619,6 +619,7 @@ function initBuffers() {
     floorVertexTextureCoordBuffer.numItems = 6;
     gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, floorVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
+    //textures
     gl.uniform1i(shaderProgram.samplerUniform0, 0);
     gl.activeTexture(gl.TEXTURE0);
 }
@@ -719,7 +720,7 @@ function drawScene() {
 	
 	// Computing the Projection Matrix
 	//for now
-	pMatrix = [[1.0000000000000002,0,0,0],[0,1.0000000000000002,0,0],[0,0,-1.0000133334222228,-0.00020000133334222229],[0,0,-1,0]]//perspective( 90, 1, 0.0001, 15 );
+	pMatrix = [[1.0000000000000002,0,0,0],[0,1.0000000000000002,0,0],[0,0,-1.0000133334222228,-0.00020000133334222229],[0,0,-1,0]];//perspective( 90, 1, 0.0001, 15 );
 	pMatrix.matrix = true;
 	
 	// Passing the Projection Matrix to apply the current projection
@@ -819,14 +820,6 @@ function check_col(x,y) {
 		}	
 	}
 	return false;
-}
-//----------------------------------------------------------------------------
-//
-//  User Interaction
-//
-
-function outputInfos(){
-    
 }
 
 //----------------------------------------------------------------------------
@@ -1025,6 +1018,7 @@ function handleLoadedTexture(texture) {
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.image);
+    //a imagem pode ser apagada
     texture.image = null;
     delete texture.image;
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
@@ -1040,10 +1034,8 @@ function initWebGL( canvas ) {
 	try {
 		gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
 		
-		// DEFAULT: The viewport occupies the whole canvas 
-		// DEFAULT: The viewport background color is WHITE
-
 		// Enable FACE CULLING
+		//se estiver activado nao da para ver o tecto
 		//gl.enable( gl.CULL_FACE );
 		//gl.cullFace( gl.BACK );
 
@@ -1073,14 +1065,14 @@ function initTextures() {
       	handleLoadedTexture(floorTexture);
     };
     floorTexture.image.src = "floor.bmp";
-
+    //esfera
     esferaTexture = gl.createTexture();
     esferaTexture.image = new Image();
     esferaTexture.image.onload = function() {
     	handleLoadedTexture(esferaTexture);
     };
     esferaTexture.image.src = "gold.bmp";
-
+    //ceiling
     topTexture = gl.createTexture();
     topTexture.image = new Image();
     topTexture.image.onload = function() {
@@ -1089,7 +1081,6 @@ function initTextures() {
     topTexture.image.src = "top.bmp";
 }
 function runWebGL() {
-	
 	var canvas = document.getElementById("my-canvas");
 	
 	initWebGL( canvas );
@@ -1099,10 +1090,10 @@ function runWebGL() {
 	setEventListeners();
 	
 	initBuffers();
-	initTextures();
-	tick();		// NEW --- A timer controls the rendering / animation    
 
-	outputInfos();
+	initTextures();
+
+	tick(); 
 }
 
 
