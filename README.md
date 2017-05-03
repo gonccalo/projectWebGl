@@ -1,4 +1,4 @@
-#WebGL maze 
+# WebGL maze 
 A maze game similar to the classic Windows 95 screensaver.
 Made in webgl.<br>
 User can upload custom mazes.
